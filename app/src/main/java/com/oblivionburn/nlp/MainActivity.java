@@ -548,22 +548,27 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 Logic.UserInput = true;
                 String[] wordArray = Logic.prepInput(input);
 
-                List<String> history = Data.getHistory();
-                input = Logic.HistoryRules(input);
-                history.add("User: " + input);
-
-                String output = Logic.Respond(wordArray, input);
-
-                if (!output.equals(""))
+                if (wordArray != null)
                 {
-                    history.add("AI: " + output);
+                    List<String> history = Data.getHistory();
+                    input = Logic.HistoryRules(input);
+                    history.add("User: " + input);
+
+                    String output = Logic.Respond(wordArray, input);
+
+                    if (!output.equals(""))
+                    {
+                        history.add("AI: " + output);
+                    }
+
+                    Data.saveHistory(history);
+
+                    ScrollHistory();
+
+                    Logic.ClearLeftovers();
+
                 }
 
-                Data.saveHistory(history);
-
-                ScrollHistory();
-
-                Logic.ClearLeftovers();
                 Input.setText("");
                 img_Face.setImageResource(R.drawable.face_neutral);
             }

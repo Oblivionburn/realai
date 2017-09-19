@@ -1,5 +1,7 @@
 package com.oblivionburn.nlp;
 
+import android.text.TextUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +118,8 @@ class Logic
             result += doc_chars.get(i);
         }
 
-        if (!result.equals(""))
+        result = result.trim();
+        if (!TextUtils.isEmpty(result))
         {
             wordArray = result.split(" ");
 
