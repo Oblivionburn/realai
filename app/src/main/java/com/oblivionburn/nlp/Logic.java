@@ -27,7 +27,7 @@ class Logic
 
         if (wordArray != null)
         {
-            if (UserInput)
+            if (UserInput || Advanced)
             {
                 UpdateInputList(input);
                 prepInput_UpdateExistingFrequencies(wordArray);

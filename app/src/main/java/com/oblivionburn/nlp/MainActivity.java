@@ -771,6 +771,46 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         dlgAlert.create().show();
     }
 
+    //Yes/No Box for Advanced
+    private void Acknowledge_Advanced(MenuItem item)
+    {
+        final MenuItem item_Advanced = item;
+
+        if (Logic.Advanced)
+        {
+            ToggleAdvanced(item_Advanced);
+        }
+        else
+        {
+            stopTimer();
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener()
+            {
+                @Override
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    switch (which)
+                    {
+                        case DialogInterface.BUTTON_POSITIVE:
+                            ToggleAdvanced(item_Advanced);
+                            break;
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            startTimer();
+                            break;
+                    }
+                }
+            };
+
+            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
+            dlgAlert.setMessage("Warning: Advanced mode will force the AI to only use procedurally generated responses and allow its thinking to modify data. " +
+                    "This mode is not recommended and should only be used for the sake of science. Are you sure you want to enable this?");
+            dlgAlert.setTitle("System Message");
+            dlgAlert.setNegativeButton("No", dialogClickListener);
+            dlgAlert.setPositiveButton("Yes", dialogClickListener);
+            dlgAlert.setCancelable(false);
+            dlgAlert.create().show();
+        }
+    }
+
     //Menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -884,7 +924,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 return true;
 
             case R.id.advanced:
-                ToggleAdvanced(item);
+                Acknowledge_Advanced(item);
                 return true;
 
             case R.id.exit_app:
