@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -25,8 +24,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.method.ScrollingMovementMethod;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,6 +31,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -41,23 +39,23 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnItemSelectedListener
 {
-    private int int_Time = 10000;
-    private int int_Delay = 0;
-    private int wordfix_selection = 0;
-    private int delay_selection = 0;
-    private int ready = 0;
+    public static final File Brain_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/" );
+    public static final File History_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/History/" );
+    public static final File Thought_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/Thoughts/" );
 
-    private EditText Output = null;
-    private EditText Input = null;
-    private EditText txt_WordFix = null;
+    static int int_Time = 10000;
+    static boolean bl_DelayForever = false;
+
+    private LiteText Output = null;
+    private LiteText Input = null;
+    private LiteText txt_WordFix = null;
     private Spinner sp_WordFix = null;
     private Button btn_WordFix = null;
     private Button btn_Enter = null;
@@ -66,26 +64,75 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private Button btn_Discourage = null;
     private ImageView img_Face = null;
 
+    private int int_Delay = 0;
+    private int delay_selection = 0;
+    private int wordfix_selection = 0;
+
     private boolean bl_Typing = false;
     private boolean bl_Ready = false;
     private boolean bl_Thought = false;
     private boolean bl_WordFix = false;
     private boolean bl_Delay = false;
-    private boolean bl_DelayForever = false;
     private boolean bl_Tips = false;
     private boolean bl_PermitsMissing = false;
     private boolean bl_Encourage_Pressed = false;
     private boolean bl_Discourage_Pressed = false;
 
-    public static final File Brain_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/" );
-    public static final File History_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/History/" );
-    public static final File Thought_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/Thoughts/" );
-
     private Handler handler;
     private boolean KeyboardOpen;
     private View rootView;
-    private final int PERMISSION_STORAGE = 1;
-    private final int PERMISSION_OVERLAY = 2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setContentView(R.layout.activity_main);
+
+        Input = findViewById(R.id.txt_Input);
+
+        Output = findViewById(R.id.txt_Output);
+        Output.setMaxLines(Integer.MAX_VALUE);
+
+        btn_Enter = findViewById(R.id.btn_Enter);
+        btn_Menu = findViewById(R.id.btn_Menu);
+
+        sp_WordFix = findViewById(R.id.sp_WordFix);
+        sp_WordFix.setOnItemSelectedListener(this);
+        txt_WordFix = findViewById(R.id.txt_WordFix);
+        btn_WordFix = findViewById(R.id.btn_WordFix);
+
+        btn_Encourage = findViewById(R.id.btn_Encourage);
+        btn_Discourage = findViewById(R.id.btn_Discourage);
+
+        img_Face = findViewById(R.id.img_Face);
+
+        handler = new Handler();
+
+        createBrain();
+        createListeners();
+
+        rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
+        {
+            @Override
+            public void onGlobalLayout()
+            {
+                int heightDiff = rootView.getRootView().getHeight() - rootView.getHeight();
+                KeyboardOpen = heightDiff > Util.dpToPx(getApplicationContext());
+            }
+        });
+
+        if (hasPermissions())
+        {
+            bl_Ready = true;
+            DisplayTips();
+        }
+        else
+        {
+            DisplayPermissions();
+        }
+    }
 
     private void createBrain()
     {
@@ -104,7 +151,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             catch (IOException e)
             {
                 e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Error: " + e.toString(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -118,7 +164,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             catch (IOException e)
             {
                 e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Error: " + e.toString(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -133,7 +178,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             catch (IOException e)
             {
                 e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Error: " + e.toString(), Toast.LENGTH_LONG).show();
             }
         }
         else
@@ -167,10 +211,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             {
                 case "Off":
                     Logic.Advanced = false;
+                    Disable_AdvancedStuff();
                     break;
 
                 case "On":
                     Logic.Advanced = true;
+                    Enabled_AdvancedStuff();
                     break;
             }
         }
@@ -183,58 +229,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         if (!Thought_dir.exists())
         {
             Thought_dir.mkdirs();
-        }
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setContentView(R.layout.activity_main);
-
-        Input = (EditText)findViewById(R.id.txt_Input);
-
-        Output = (EditText)findViewById(R.id.txt_Output);
-        Output.setMaxLines(Integer.MAX_VALUE);
-
-        btn_Enter = (Button)findViewById(R.id.btn_Enter);
-        btn_Menu = (Button)findViewById(R.id.btn_Menu);
-
-        sp_WordFix = (Spinner)findViewById(R.id.sp_WordFix);
-        sp_WordFix.setOnItemSelectedListener(this);
-        txt_WordFix = (EditText)findViewById(R.id.txt_WordFix);
-        btn_WordFix = (Button)findViewById(R.id.btn_WordFix);
-
-        btn_Encourage = (Button)findViewById(R.id.btn_Encourage);
-        btn_Discourage = (Button)findViewById(R.id.btn_Discourage);
-
-        img_Face = (ImageView)findViewById(R.id.img_Face);
-
-        handler = new Handler();
-
-        createBrain();
-        createListeners();
-
-        rootView = findViewById(android.R.id.content);
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
-        {
-            @Override
-            public void onGlobalLayout()
-            {
-                int heightDiff = rootView.getRootView().getHeight() - rootView.getHeight();
-                KeyboardOpen = heightDiff > dpToPx(getApplicationContext());
-            }
-        });
-
-        if (hasPermissions())
-        {
-            bl_Ready = true;
-            DisplayTips();
-        }
-        else
-        {
-            DisplayPermissions();
         }
     }
 
@@ -310,17 +304,27 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
             public boolean onTouch(View v, MotionEvent event)
             {
-                if(event.getAction() == MotionEvent.ACTION_DOWN)
+                switch (event.getAction())
                 {
-                    img_Face.setImageResource(R.drawable.face_encourage);
-                    bl_Encourage_Pressed = true;
-                }
+                    case MotionEvent.ACTION_DOWN:
+                        if(event.getAction() == MotionEvent.ACTION_DOWN)
+                        {
+                            img_Face.setImageResource(R.drawable.face_encourage);
+                            bl_Encourage_Pressed = true;
+                        }
 
-                if(event.getAction() == MotionEvent.ACTION_UP)
-                {
-                    handler.postDelayed(runnable, 250);
+                        if(event.getAction() == MotionEvent.ACTION_UP)
+                        {
+                            handler.postDelayed(runnable, 250);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        v.performClick();
+                        break;
+                    default:
+                        break;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -346,17 +350,27 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
             public boolean onTouch(View v, MotionEvent event)
             {
-                if(event.getAction() == MotionEvent.ACTION_DOWN)
+                switch (event.getAction())
                 {
-                    img_Face.setImageResource(R.drawable.face_discourage);
-                    bl_Discourage_Pressed = true;
-                }
+                    case MotionEvent.ACTION_DOWN:
+                        if(event.getAction() == MotionEvent.ACTION_DOWN)
+                        {
+                            img_Face.setImageResource(R.drawable.face_discourage);
+                            bl_Discourage_Pressed = true;
+                        }
 
-                if(event.getAction() == MotionEvent.ACTION_UP)
-                {
-                    handler.postDelayed(runnable, 250);
+                        if(event.getAction() == MotionEvent.ACTION_UP)
+                        {
+                            handler.postDelayed(runnable, 250);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        v.performClick();
+                        break;
+                    default:
+                        break;
                 }
-                return false;
+                return true;
             }
         });
     }
@@ -369,12 +383,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             if (!Settings.canDrawOverlays(this))
             {
                 result = false;
-                Toast.makeText(getApplicationContext(), "Missing required permission for Real AI (text): Draw over other apps.", Toast.LENGTH_LONG).show();
             }
             else if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             {
                 result = false;
-                Toast.makeText(getApplicationContext(), "Missing required permission for Real AI (text): Write to storage.", Toast.LENGTH_LONG).show();
             }
         }
 
@@ -428,7 +440,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 int_Delay++;
             }
             else if (int_Delay == 1 &&
-                     !bl_DelayForever)
+                    !bl_DelayForever)
             {
                 AttentionSpan();
                 int_Delay = 0;
@@ -460,7 +472,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
 
             Logic.last_response_thinking = Logic.Think(wordArray);
-            Logic.last_response_thinking = Logic.HistoryRules(Logic.last_response_thinking);
+            Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
 
             if (!Logic.last_response_thinking.equals(""))
             {
@@ -468,7 +480,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 Data.saveThoughts(thoughts);
             }
 
-            Logic.ClearLeftovers();
+            Util.ClearLeftovers();
 
             if (bl_Thought)
             {
@@ -490,13 +502,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     }
 
     //Try to initiate conversation
-    private void AttentionSpan()
+    public void AttentionSpan()
     {
         if (!bl_Typing)
         {
             if (Logic.NewInput)
             {
-                CleanMemory();
+                Util.CleanMemory();
             }
 
             Logic.NewInput = false;
@@ -551,7 +563,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 if (wordArray != null)
                 {
                     List<String> history = Data.getHistory();
-                    input = Logic.HistoryRules(input);
+                    input = Util.HistoryRules(input);
                     history.add("User: " + input);
 
                     String output = Logic.Respond(wordArray, input);
@@ -565,8 +577,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
                     ScrollHistory();
 
-                    Logic.ClearLeftovers();
-
+                    Util.ClearLeftovers();
                 }
 
                 Input.setText("");
@@ -657,13 +668,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 }
             }
         };
-        AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-        dlgAlert.setMessage("Exit the NLP Program?");
-        dlgAlert.setTitle("System Message");
-        dlgAlert.setNegativeButton("No", dialogClickListener);
-        dlgAlert.setPositiveButton("Yes", dialogClickListener);
-        dlgAlert.setCancelable(false);
-        dlgAlert.create().show();
+        Alert(dialogClickListener, "Exit the NLP Program?");
     }
 
     //Yes/No Box for Erase
@@ -673,10 +678,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener()
         {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which){
+            public void onClick(DialogInterface dialog, int which)
+            {
+                switch (which)
+                {
                     case DialogInterface.BUTTON_POSITIVE:
-                        EraseMemory(Brain_dir);
+                        Util.EraseMemory(Brain_dir);
 
                         Output.setText("");
                         Input.setText("");
@@ -761,14 +768,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 }
             }
         };
-
-        AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-        dlgAlert.setMessage("Erase all memory?");
-        dlgAlert.setTitle("System Message");
-        dlgAlert.setNegativeButton("No", dialogClickListener);
-        dlgAlert.setPositiveButton("Yes", dialogClickListener);
-        dlgAlert.setCancelable(false);
-        dlgAlert.create().show();
+        Alert(dialogClickListener, "Erase all memory?");
     }
 
     //Yes/No Box for Advanced
@@ -778,7 +778,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         if (Logic.Advanced)
         {
-            ToggleAdvanced(item_Advanced);
+            Util.ToggleAdvanced(item_Advanced);
+            Disable_AdvancedStuff();
         }
         else
         {
@@ -791,7 +792,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     switch (which)
                     {
                         case DialogInterface.BUTTON_POSITIVE:
-                            ToggleAdvanced(item_Advanced);
+                            Util.ToggleAdvanced(item_Advanced);
+                            Enabled_AdvancedStuff();
                             break;
                         case DialogInterface.BUTTON_NEGATIVE:
                             startTimer();
@@ -799,16 +801,63 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     }
                 }
             };
-
-            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Warning: Advanced mode will force the AI to only use procedurally generated responses and allow its thinking to modify data. " +
+            Alert(dialogClickListener, "Warning: Advanced mode will force the AI to only use procedurally generated responses and allow its thinking to modify data. " +
                     "This mode is not recommended and should only be used for the sake of science. Are you sure you want to enable this?");
-            dlgAlert.setTitle("System Message");
-            dlgAlert.setNegativeButton("No", dialogClickListener);
-            dlgAlert.setPositiveButton("Yes", dialogClickListener);
-            dlgAlert.setCancelable(false);
-            dlgAlert.create().show();
         }
+    }
+
+    private void Enabled_AdvancedStuff()
+    {
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.ABOVE, R.id.btn_Discourage);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        btn_Enter.setLayoutParams(params);
+
+        btn_Encourage.setVisibility(View.VISIBLE);
+        btn_Encourage.setClickable(true);
+        btn_Encourage.setFocusableInTouchMode(true);
+        btn_Encourage.setFocusable(true);
+
+        btn_Discourage.setVisibility(View.VISIBLE);
+        btn_Discourage.setClickable(true);
+        btn_Discourage.setFocusableInTouchMode(true);
+        btn_Discourage.setFocusable(true);
+
+        img_Face.setVisibility(View.VISIBLE);
+        img_Face.setImageResource(R.drawable.face_neutral);
+    }
+
+    private void Disable_AdvancedStuff()
+    {
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.addRule(RelativeLayout.ABOVE, R.id.btn_Menu);
+        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        btn_Enter.setLayoutParams(params);
+
+        btn_Encourage.setVisibility(View.INVISIBLE);
+        btn_Encourage.setClickable(false);
+        btn_Encourage.setFocusableInTouchMode(false);
+        btn_Encourage.setFocusable(false);
+
+        btn_Discourage.setVisibility(View.INVISIBLE);
+        btn_Discourage.setClickable(false);
+        btn_Discourage.setFocusableInTouchMode(false);
+        btn_Discourage.setFocusable(false);
+
+        img_Face.setVisibility(View.INVISIBLE);
+    }
+
+    private void Alert(DialogInterface.OnClickListener dialogClickListener, String message)
+    {
+        AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
+        dlgAlert.setMessage(message);
+        dlgAlert.setTitle("System Message");
+        dlgAlert.setPositiveButton("Yes", dialogClickListener);
+        dlgAlert.setNegativeButton("No", dialogClickListener);
+        dlgAlert.setCancelable(false);
+        dlgAlert.create().show();
     }
 
     //Menu
@@ -848,11 +897,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Discourage.setVisibility(View.INVISIBLE);
         img_Face.setVisibility(View.INVISIBLE);
 
-        if (KeyboardOpen)
-        {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(Input.getWindowToken(), 0);
-        }
+        HideKeyboard();
 
         stopTimer();
         stopThinking();
@@ -874,10 +919,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 btn_Enter.setText(R.string.enter_button);
                 btn_Enter.setVisibility(View.VISIBLE);
 
-                btn_Encourage.setVisibility(View.VISIBLE);
-                btn_Discourage.setVisibility(View.VISIBLE);
-                img_Face.setVisibility(View.VISIBLE);
-                img_Face.setImageResource(R.drawable.face_neutral);
+                if (Logic.Advanced)
+                {
+                    btn_Encourage.setVisibility(View.VISIBLE);
+                    btn_Discourage.setVisibility(View.VISIBLE);
+                    img_Face.setVisibility(View.VISIBLE);
+                    img_Face.setImageResource(R.drawable.face_neutral);
+                }
 
                 startTimer();
                 startThinking();
@@ -933,361 +981,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
             default:
                 return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private void ToggleAdvanced(MenuItem item)
-    {
-        if (Logic.Advanced)
-        {
-            Logic.Advanced = false;
-            item.setTitle("Advanced Mode: Off");
-
-            if (bl_DelayForever)
-            {
-                Data.setConfig("Infinite", "Off");
-            }
-            else
-            {
-                Data.setConfig((int_Time / 1000) + " seconds", "Off");
-            }
-        }
-        else
-        {
-            Logic.Advanced = true;
-            item.setTitle("Advanced Mode: On");
-
-            if (bl_DelayForever)
-            {
-                Data.setConfig("Infinite", "On");
-            }
-            else
-            {
-                Data.setConfig((int_Time / 1000) + " seconds", "On");
-            }
-        }
-    }
-
-    private void EraseMemory(File fileOrDirectory)
-    {
-        if (fileOrDirectory.isDirectory())
-        {
-            for (File child : fileOrDirectory.listFiles())
-            {
-                EraseMemory(child);
-            }
-        }
-        fileOrDirectory.delete();
-    }
-
-    private void CleanMemory()
-    {
-        List<String> input = Data.getInputList();
-        if (input.size() > 0)
-        {
-            for (int i = 0; i < input.size(); i++)
-            {
-                String MemoryCheck = input.get(i);
-                File file = new File(Brain_dir, MemoryCheck + ".txt");
-
-                if (file.exists())
-                {
-                    List<String> output = Data.getOutputList(MemoryCheck);
-                    if (output.size() == 0)
-                    {
-                        file.delete();
-                        input.remove(i);
-                        if (i > 0)
-                        {
-                            i--;
-                        }
-                    }
-                    else if (output.size() == 1)
-                    {
-                        if (output.get(0).contains("~"))
-                        {
-                            file.delete();
-                            input.remove(i);
-                            if (i > 0)
-                            {
-                                i--;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    input.remove(i);
-                    if (i > 0)
-                    {
-                        i--;
-                    }
-                }
-            }
-
-            Data.saveInputList(input);
-        }
-
-        File[] files = Brain_dir.listFiles();
-        if (files != null)
-        {
-            for (File file : files)
-            {
-                String MemoryCheck = file.getName();
-                int index = MemoryCheck.lastIndexOf('.');
-                if (index > 0)
-                {
-                    MemoryCheck = MemoryCheck.substring(0, index);
-
-                    List<String> output = Data.getOutputList(MemoryCheck);
-                    if (output.size() == 0)
-                    {
-                        file.delete();
-                    }
-                }
-            }
-        }
-    }
-
-    private void Encourage()
-    {
-        if (!Logic.last_response.equals(""))
-        {
-            if (Logic.last_response.contains("."))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("."), Logic.last_response.indexOf(".") + 1, " .");
-                Logic.last_response = sb.toString();
-            }
-            else if (Logic.last_response.contains("?"))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("?"), Logic.last_response.indexOf("?") + 1, " $");
-                Logic.last_response = sb.toString();
-            }
-            else if (Logic.last_response.contains("!"))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("!"), Logic.last_response.indexOf("!") + 1, " !");
-                Logic.last_response = sb.toString();
-            }
-
-            String[] WordArray = Logic.last_response.split(" ");
-            for (int i = 0; i < WordArray.length; i++)
-            {
-                switch (WordArray[i])
-                {
-                    case ",":
-                        WordArray[i] = " ,";
-                        break;
-                    case ";":
-                        WordArray[i] = " ;";
-                        break;
-                    case ":":
-                        WordArray[i] = "";
-                        break;
-                    case "?":
-                        WordArray[i] = " $";
-                        break;
-                    case "$":
-                        WordArray[i] = " $";
-                        break;
-                    case "!":
-                        WordArray[i] = " !";
-                        break;
-                    case ".":
-                        WordArray[i] = " .";
-                        break;
-                }
-            }
-
-            List<WordData> data;
-            List<String> words = new ArrayList<>();
-            List<Integer> frequencies = new ArrayList<>();
-
-            for (int pro = 0; pro < WordArray.length - 1; pro++)
-            {
-                data = Data.getProWords(WordArray[pro]);
-                words.clear();
-                frequencies.clear();
-
-                for (int i = 0; i < data.size(); i++)
-                {
-                    words.add(data.get(i).getWord());
-                    frequencies.add(data.get(i).getFrequency());
-                }
-
-                if (words.contains(WordArray[pro + 1]))
-                {
-                    int index = words.indexOf(WordArray[pro + 1]);
-                    frequencies.set(index, frequencies.get(index) + 1);
-                }
-
-                data.clear();
-                for (int i = 0; i < words.size(); i++)
-                {
-                    WordData new_data = new WordData();
-                    new_data.setWord(words.get(i));
-                    new_data.setFrequency(frequencies.get(i));
-                    data.add(new_data);
-                }
-
-                Data.saveProWords(data, WordArray[pro]);
-            }
-
-            for (int pre = 1; pre < WordArray.length; pre++)
-            {
-                data = Data.getPreWords(WordArray[pre]);
-                words.clear();
-                frequencies.clear();
-
-                for (int i = 0; i < data.size(); i++)
-                {
-                    words.add(data.get(i).getWord());
-                    frequencies.add(data.get(i).getFrequency());
-                }
-
-                if (words.contains(WordArray[pre - 1]))
-                {
-                    int index = words.indexOf(WordArray[pre - 1]);
-                    frequencies.set(index, frequencies.get(index) + 1);
-                }
-
-                data.clear();
-                for (int i = 0; i < words.size(); i++)
-                {
-                    WordData new_data = new WordData();
-                    new_data.setWord(words.get(i));
-                    new_data.setFrequency(frequencies.get(i));
-                    data.add(new_data);
-                }
-
-                Data.savePreWords(data, WordArray[pre]);
-            }
-        }
-    }
-
-    private void Discourage()
-    {
-        if (!Logic.last_response.equals(""))
-        {
-            if (Logic.last_response.contains("."))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("."), Logic.last_response.indexOf(".") + 1, " .");
-                Logic.last_response = sb.toString();
-            }
-            else if (Logic.last_response.contains("?"))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("?"), Logic.last_response.indexOf("?") + 1, " $");
-                Logic.last_response = sb.toString();
-            }
-            else if (Logic.last_response.contains("!"))
-            {
-                String str = Logic.last_response;
-                StringBuilder sb = new StringBuilder(str).replace(Logic.last_response.indexOf("!"), Logic.last_response.indexOf("!") + 1, " !");
-                Logic.last_response = sb.toString();
-            }
-
-            String[] WordArray = Logic.last_response.split(" ");
-            for (int i = 0; i < WordArray.length; i++)
-            {
-                switch (WordArray[i])
-                {
-                    case ",":
-                        WordArray[i] = " ,";
-                        break;
-                    case ";":
-                        WordArray[i] = " ;";
-                        break;
-                    case ":":
-                        WordArray[i] = "";
-                        break;
-                    case "?":
-                        WordArray[i] = " $";
-                        break;
-                    case "$":
-                        WordArray[i] = " $";
-                        break;
-                    case "!":
-                        WordArray[i] = " !";
-                        break;
-                    case ".":
-                        WordArray[i] = " .";
-                        break;
-                }
-            }
-
-            List<WordData> data;
-            List<String> words = new ArrayList<>();
-            List<Integer> frequencies = new ArrayList<>();
-
-            for (int pro = 0; pro < WordArray.length - 1; pro++)
-            {
-                data = Data.getProWords(WordArray[pro]);
-                words.clear();
-                frequencies.clear();
-
-                for (int i = 0; i < data.size(); i++)
-                {
-                    words.add(data.get(i).getWord());
-                    frequencies.add(data.get(i).getFrequency());
-                }
-
-                if (words.contains(WordArray[pro + 1]))
-                {
-                    int index = words.indexOf(WordArray[pro + 1]);
-                    if (frequencies.get(index) > 0)
-                    {
-                        frequencies.set(index, frequencies.get(index) - 1);
-                    }
-                }
-
-                data.clear();
-                for (int i = 0; i < words.size(); i++)
-                {
-                    WordData new_data = new WordData();
-                    new_data.setWord(words.get(i));
-                    new_data.setFrequency(frequencies.get(i));
-                    data.add(new_data);
-                }
-
-                Data.saveProWords(data, WordArray[pro]);
-            }
-
-            for (int pre = 1; pre < WordArray.length; pre++)
-            {
-                data = Data.getPreWords(WordArray[pre]);
-                words.clear();
-                frequencies.clear();
-
-                for (int i = 0; i < data.size(); i++)
-                {
-                    words.add(data.get(i).getWord());
-                    frequencies.add(data.get(i).getFrequency());
-                }
-
-                if (words.contains(WordArray[pre - 1]))
-                {
-                    int index = words.indexOf(WordArray[pre - 1]);
-                    if (frequencies.get(index) > 0)
-                    {
-                        frequencies.set(index, frequencies.get(index) - 1);
-                    }
-                }
-
-                data.clear();
-                for (int i = 0; i < words.size(); i++)
-                {
-                    WordData new_data = new WordData();
-                    new_data.setWord(words.get(i));
-                    new_data.setFrequency(frequencies.get(i));
-                    data.add(new_data);
-                }
-
-                Data.savePreWords(data, WordArray[pre]);
-            }
         }
     }
 
@@ -1387,8 +1080,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     String oldPath = input.get(i) + ".txt";
                     String newInput = input.get(i).replace(oldWord, newWord);
                     input.set(i, newInput);
-                    File oldFile = new File(MainActivity.Brain_dir, oldPath);
-                    File newFile = new File(MainActivity.Brain_dir, input.get(i) + ".txt");
+                    File oldFile = new File(Brain_dir, oldPath);
+                    File newFile = new File(Brain_dir, input.get(i) + ".txt");
                     oldFile.renameTo(newFile);
                 }
             }
@@ -1411,8 +1104,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                         data.get(j).setWord(newWord);
                         String newPath = "Pre-" + data.get(j).getWord() + ".txt";
 
-                        File oldFile = new File(MainActivity.Brain_dir, oldPath);
-                        File newFile = new File(MainActivity.Brain_dir, newPath);
+                        File oldFile = new File(Brain_dir, oldPath);
+                        File newFile = new File(Brain_dir, newPath);
                         oldFile.renameTo(newFile);
                     }
                 }
@@ -1427,8 +1120,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                         data.get(j).setWord(newWord);
                         String newPath = "Pro-" + data.get(j).getWord() + ".txt";
 
-                        File oldFile = new File(MainActivity.Brain_dir, oldPath);
-                        File newFile = new File(MainActivity.Brain_dir, newPath);
+                        File oldFile = new File(Brain_dir, oldPath);
+                        File newFile = new File(Brain_dir, newPath);
                         oldFile.renameTo(newFile);
                     }
                 }
@@ -1505,9 +1198,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.INVISIBLE);
         btn_Enter.setText(R.string.ok_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Encourage.setVisibility(View.INVISIBLE);
-        btn_Discourage.setVisibility(View.INVISIBLE);
-        img_Face.setVisibility(View.INVISIBLE);
+        Disable_AdvancedStuff();
 
         String tips = "";
         tips += "Here are some tips for teaching the AI: \n\n";
@@ -1559,9 +1250,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.INVISIBLE);
         btn_Enter.setText(R.string.exit_app);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Encourage.setVisibility(View.INVISIBLE);
-        btn_Discourage.setVisibility(View.INVISIBLE);
-        img_Face.setVisibility(View.INVISIBLE);
+        Disable_AdvancedStuff();
 
         String permissions = "";
         permissions += "This app requires the 'Storage' and 'Draw over other apps' permissions to function. \n\n";
@@ -1613,16 +1302,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Encourage.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-        img_Face.setVisibility(View.VISIBLE);
-        img_Face.setImageResource(R.drawable.face_neutral);
+
+        if (Logic.Advanced)
+        {
+            Enabled_AdvancedStuff();
+        }
 
         ScrollHistory();
 
-        Input.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        ShowKeyboard();
 
         bl_WordFix = false;
         bl_Delay = false;
@@ -1636,16 +1324,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Encourage.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-        img_Face.setVisibility(View.VISIBLE);
-        img_Face.setImageResource(R.drawable.face_neutral);
+
+        if (Logic.Advanced)
+        {
+            Enabled_AdvancedStuff();
+        }
 
         ScrollHistory();
 
-        Input.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        ShowKeyboard();
 
         bl_Thought = false;
 
@@ -1658,16 +1345,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Encourage.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-        img_Face.setVisibility(View.VISIBLE);
-        img_Face.setImageResource(R.drawable.face_neutral);
+
+        if (Logic.Advanced)
+        {
+            Enabled_AdvancedStuff();
+        }
 
         ScrollHistory();
 
-        Input.requestFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        ShowKeyboard();
 
         bl_Tips = false;
 
@@ -1675,21 +1361,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         startThinking();
     }
 
-    private static float dpToPx(Context context)
-    {
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) 200, metrics);
-    }
-
     public void Encourage(View view)
     {
-        Encourage();
+        Util.Encourage();
     }
 
     public void Discourage(View view)
     {
-        CleanMemory();
-        Discourage();
+        Util.CleanMemory();
+        Util.Discourage();
 
         List<String> history = Data.getHistory();
         history.add("---New Session---");
@@ -1697,5 +1377,27 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         ScrollHistory();
 
         Logic.NewInput = false;
+    }
+
+    public void HideKeyboard()
+    {
+        if (KeyboardOpen)
+        {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null)
+            {
+                imm.hideSoftInputFromWindow(Input.getWindowToken(), 0);
+            }
+        }
+    }
+
+    private void ShowKeyboard()
+    {
+        Input.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null)
+        {
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        }
     }
 }

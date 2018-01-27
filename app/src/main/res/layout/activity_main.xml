@@ -12,7 +12,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:scrollbars="vertical">
 
-    <EditText
+    <com.oblivionburn.nlp.LiteText
         android:id="@+id/txt_Output"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
         android:linksClickable="true"
         android:autoLink="web">
         <requestFocus />
-    </EditText>
+    </com.oblivionburn.nlp.LiteText>
 
     <Button
         android:id="@+id/btn_Menu"
@@ -49,7 +49,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true" />
 
-    <EditText
+    <com.oblivionburn.nlp.LiteText
         android:id="@+id/txt_WordFix"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
         android:layout_height="wrap_content"
         android:onClick="onSend"
         android:text="@string/enter_button"
-        android:layout_above="@+id/btn_Encourage"
+        android:layout_above="@+id/btn_Menu"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
@@ -112,9 +112,14 @@
         android:id="@+id/btn_Encourage"
         android:layout_toEndOf="@+id/btn_WordFix"
         android:layout_toRightOf="@+id/btn_WordFix"
-        android:onClick="Encourage" />
+        android:clickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:longClickable="false"
+        android:onClick="Encourage"
+        android:visibility="invisible" />
 
-    <EditText
+    <com.oblivionburn.nlp.LiteText
         android:id="@+id/txt_Input"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -124,7 +129,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:longClickable="false" />
 
     <Button
         android:text="@string/discourage"
@@ -136,7 +142,12 @@
         android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/btn_WordFix"
         android:layout_toStartOf="@+id/btn_WordFix"
-        android:onClick="Discourage" />
+        android:clickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:longClickable="false"
+        android:onClick="Discourage"
+        android:visibility="invisible" />
 
     <ImageView
         android:layout_width="wrap_content"
@@ -147,6 +158,7 @@
         android:id="@+id/img_Face"
         android:layout_toLeftOf="@+id/btn_Encourage"
         android:layout_toStartOf="@+id/btn_Encourage"
-        android:layout_above="@+id/btn_Menu" />
+        android:layout_above="@+id/btn_Menu"
+        android:visibility="invisible" />
 
 </RelativeLayout>

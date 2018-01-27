@@ -2,15 +2,15 @@ apply plugin: 'com.android.application'
 
 //noinspection GroovyMissingReturnStatement
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25.0.3'
+    compileSdkVersion 26
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "com.oblivionburn.nlp"
-        minSdkVersion 10
-        targetSdkVersion 25
-        versionCode 74
-        versionName "3.8"
+        minSdkVersion 14
+        targetSdkVersion 26
+        versionCode 75
+        versionName "3.9"
     }
     buildTypes {
         release {
@@ -23,5 +23,5 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:appcompat-v7:26.1.0'
 }

@@ -163,7 +163,7 @@ class Data
                 if (line.contains("~"))
                 {
                     WordSet = line.split("~");
-                    if (!WordSet[1].equals("") && tryParseInt(WordSet[1]))
+                    if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                     {
                         int frequency = Integer.parseInt(WordSet[1]);
                         words.add(WordSet[0]);
@@ -237,7 +237,7 @@ class Data
                     if (line.contains("~"))
                     {
                         WordSet = line.split("~");
-                        if (!WordSet[1].equals("") && tryParseInt(WordSet[1]))
+                        if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                         {
                             int frequency = Integer.parseInt(WordSet[1]);
                             words.add(WordSet[0]);
@@ -314,7 +314,7 @@ class Data
                     if (line.contains("~"))
                     {
                         WordSet = line.split("~");
-                        if (!WordSet[1].equals("") && tryParseInt(WordSet[1]))
+                        if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                         {
                             int frequency = Integer.parseInt(WordSet[1]);
                             words.add(WordSet[0]);
@@ -716,16 +716,4 @@ class Data
         return thoughts;
     }
 
-    private static boolean tryParseInt(String value)
-    {
-        try
-        {
-            Integer.parseInt(value);
-            return true;
-        }
-        catch (NumberFormatException e)
-        {
-            return false;
-        }
-    }
 }
