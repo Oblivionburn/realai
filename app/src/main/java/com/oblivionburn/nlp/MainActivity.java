@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
@@ -78,7 +79,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Encourage_Pressed = false;
     private boolean bl_Discourage_Pressed = false;
 
-    private Handler handler;
+    private static Handler handle_thinking;
+    private static Handler handle_attention;
     private boolean KeyboardOpen;
     private View rootView;
 
@@ -88,6 +90,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         super.onCreate(savedInstanceState);
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
+
+        handle_thinking = new Handler();
+        handle_attention = new Handler();
 
         Input = findViewById(R.id.txt_Input);
 
@@ -106,8 +111,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Discourage = findViewById(R.id.btn_Discourage);
 
         img_Face = findViewById(R.id.img_Face);
-
-        handler = new Handler();
 
         createBrain();
         createListeners();
@@ -445,7 +448,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 AttentionSpan();
                 int_Delay = 0;
             }
-            handler.postDelayed(Timer, int_Time);
+            handle_attention.postDelayed(Timer, int_Time);
         }
     };
 
@@ -457,7 +460,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void stopTimer()
     {
-        handler.removeCallbacks(Timer);
+        handle_attention.removeCallbacks(Timer);
     }
 
     //Thinking
@@ -466,35 +469,35 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         @Override
         public void run()
         {
-            Thread t = new Thread()
+            Logic.UserInput = false;
+
+            List<String> thoughts = Data.getThoughts();
+            String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
+
+            Logic.last_response_thinking = Logic.Think(wordArray);
+            Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
+
+            if (!Logic.last_response_thinking.equals(""))
             {
-                public void run()
+                thoughts.add("NLP: " + Logic.last_response_thinking);
+                Data.saveThoughts(thoughts);
+            }
+
+            Util.ClearLeftovers();
+
+            if (bl_Thought)
+            {
+                Output.post(new Runnable()
                 {
-                    Logic.UserInput = false;
-
-                    List<String> thoughts = Data.getThoughts();
-                    String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
-
-                    Logic.last_response_thinking = Logic.Think(wordArray);
-                    Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
-
-                    if (!Logic.last_response_thinking.equals(""))
-                    {
-                        thoughts.add("NLP: " + Logic.last_response_thinking);
-                        Data.saveThoughts(thoughts);
-                    }
-
-                    Util.ClearLeftovers();
-
-                    if (bl_Thought)
+                    @Override
+                    public void run()
                     {
                         ScrollThoughts();
                     }
+                });
+            }
 
-                    handler.postDelayed(Thought, 1000);
-                }
-            };
-            t.start();
+            handle_thinking.postDelayed(Thought, 2000);
         }
     };
 
@@ -505,7 +508,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void stopThinking()
     {
-        handler.removeCallbacks(Thought);
+        handle_thinking.removeCallbacks(Thought);
     }
 
     //Try to initiate conversation
@@ -513,35 +516,36 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         if (!bl_Typing)
         {
-            Thread t = new Thread()
+            if (Logic.NewInput)
             {
+                Util.CleanMemory();
+            }
+
+            Logic.NewInput = false;
+            Logic.Initiation = true;
+            Logic.UserInput = false;
+
+            List<String> history = Data.getHistory();
+            String[] wordArray = new String[0];
+
+            String output = Logic.Respond(wordArray, "");
+
+            if (!output.equals(""))
+            {
+                history.add("AI: " + output);
+                Data.saveHistory(history);
+            }
+
+            Output.post(new Runnable()
+            {
+                @Override
                 public void run()
                 {
-                    if (Logic.NewInput)
-                    {
-                        Util.CleanMemory();
-                    }
-
-                    Logic.NewInput = false;
-                    Logic.Initiation = true;
-                    Logic.UserInput = false;
-
-                    List<String> history = Data.getHistory();
-                    String[] wordArray = new String[0];
-
-                    String output = Logic.Respond(wordArray, "");
-
-                    if (!output.equals(""))
-                    {
-                        history.add("AI: " + output);
-                        Data.saveHistory(history);
-                    }
-
                     ScrollHistory();
-                    img_Face.setImageResource(R.drawable.face_neutral);
                 }
-            };
-            t.start();
+            });
+
+            img_Face.setImageResource(R.drawable.face_neutral);
         }
     }
 
