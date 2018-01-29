@@ -466,28 +466,35 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         @Override
         public void run()
         {
-            Logic.UserInput = false;
-
-            List<String> thoughts = Data.getThoughts();
-            String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
-
-            Logic.last_response_thinking = Logic.Think(wordArray);
-            Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
-
-            if (!Logic.last_response_thinking.equals(""))
+            Thread t = new Thread()
             {
-                thoughts.add("NLP: " + Logic.last_response_thinking);
-                Data.saveThoughts(thoughts);
-            }
+                public void run()
+                {
+                    Logic.UserInput = false;
 
-            Util.ClearLeftovers();
+                    List<String> thoughts = Data.getThoughts();
+                    String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
 
-            if (bl_Thought)
-            {
-                ScrollThoughts();
-            }
+                    Logic.last_response_thinking = Logic.Think(wordArray);
+                    Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
 
-            handler.postDelayed(Thought, 1000);
+                    if (!Logic.last_response_thinking.equals(""))
+                    {
+                        thoughts.add("NLP: " + Logic.last_response_thinking);
+                        Data.saveThoughts(thoughts);
+                    }
+
+                    Util.ClearLeftovers();
+
+                    if (bl_Thought)
+                    {
+                        ScrollThoughts();
+                    }
+
+                    handler.postDelayed(Thought, 1000);
+                }
+            };
+            t.start();
         }
     };
 
@@ -506,28 +513,35 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         if (!bl_Typing)
         {
-            if (Logic.NewInput)
+            Thread t = new Thread()
             {
-                Util.CleanMemory();
-            }
+                public void run()
+                {
+                    if (Logic.NewInput)
+                    {
+                        Util.CleanMemory();
+                    }
 
-            Logic.NewInput = false;
-            Logic.Initiation = true;
-            Logic.UserInput = false;
+                    Logic.NewInput = false;
+                    Logic.Initiation = true;
+                    Logic.UserInput = false;
 
-            List<String> history = Data.getHistory();
-            String[] wordArray = new String[0];
+                    List<String> history = Data.getHistory();
+                    String[] wordArray = new String[0];
 
-            String output = Logic.Respond(wordArray, "");
+                    String output = Logic.Respond(wordArray, "");
 
-            if (!output.equals(""))
-            {
-                history.add("AI: " + output);
-                Data.saveHistory(history);
-            }
+                    if (!output.equals(""))
+                    {
+                        history.add("AI: " + output);
+                        Data.saveHistory(history);
+                    }
 
-            ScrollHistory();
-            img_Face.setImageResource(R.drawable.face_neutral);
+                    ScrollHistory();
+                    img_Face.setImageResource(R.drawable.face_neutral);
+                }
+            };
+            t.start();
         }
     }
 
