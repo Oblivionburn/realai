@@ -403,16 +403,15 @@ class Util
     private static int GetMin(List<Integer> Integer_List)
     {
         int lowest_number = 0;
-        int current_number = Integer_List.get(0);
-        for (int b = 0; b < Integer_List.size(); b++)
+
+        if (Integer_List.size() > 0)
         {
-            if (current_number <= Integer_List.get(b))
+            for (int i : Integer_List)
             {
-                lowest_number = current_number;
-            }
-            else
-            {
-                current_number = Integer_List.get(b);
+                if (i <= lowest_number)
+                {
+                    lowest_number = i;
+                }
             }
         }
 
@@ -422,16 +421,15 @@ class Util
     static int GetMax(List<Integer> Integer_List)
     {
         int highest_number = 0;
-        int current_number = Integer_List.get(0);
-        for (int b = 0; b < Integer_List.size(); b++)
+
+        if (Integer_List.size() > 0)
         {
-            if (current_number >= Integer_List.get(b))
+            for (int i : Integer_List)
             {
-                highest_number = current_number;
-            }
-            else
-            {
-                current_number = Integer_List.get(b);
+                if (i >= highest_number)
+                {
+                    highest_number = i;
+                }
             }
         }
 
