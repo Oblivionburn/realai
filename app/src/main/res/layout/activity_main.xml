@@ -96,7 +96,7 @@
         android:layout_height="wrap_content"
         android:onClick="onSend"
         android:text="@string/enter_button"
-        android:layout_above="@+id/btn_Menu"
+        android:layout_above="@+id/btn_Discourage"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
@@ -133,21 +133,17 @@
         android:longClickable="false" />
 
     <Button
-        android:text="@string/discourage"
+        android:text="@string/new_session"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btn_Discourage"
         android:layout_above="@+id/btn_Menu"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
         android:layout_toLeftOf="@+id/btn_WordFix"
         android:layout_toStartOf="@+id/btn_WordFix"
-        android:clickable="false"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:longClickable="false"
-        android:onClick="Discourage"
-        android:visibility="invisible" />
+        android:onClick="Discourage" />
 
     <ImageView
         android:layout_width="wrap_content"

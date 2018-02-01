@@ -18,7 +18,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
@@ -525,27 +524,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             Logic.Initiation = true;
             Logic.UserInput = false;
 
-            List<String> history = Data.getHistory();
             String[] wordArray = new String[0];
-
-            String output = Logic.Respond(wordArray, "");
-
-            if (!output.equals(""))
-            {
-                history.add("AI: " + output);
-                Data.saveHistory(history);
-            }
+            final String output = Logic.Respond(wordArray, "");
 
             Output.post(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    ScrollHistory();
+                    ScrollHistory(output);
+                    img_Face.setImageResource(R.drawable.face_neutral);
                 }
             });
-
-            img_Face.setImageResource(R.drawable.face_neutral);
         }
     }
 
@@ -583,18 +573,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     List<String> history = Data.getHistory();
                     input = Util.HistoryRules(input);
                     history.add("User: " + input);
-
-                    String output = Logic.Respond(wordArray, input);
-
-                    if (!output.equals(""))
-                    {
-                        history.add("AI: " + output);
-                    }
-
                     Data.saveHistory(history);
 
-                    ScrollHistory();
-
+                    String output = Logic.Respond(wordArray, input);
+                    ScrollHistory(output);
                     Util.ClearLeftovers();
                 }
 
@@ -604,12 +586,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
     }
 
-    private void ScrollHistory()
+    private void ScrollHistory(String output)
     {
+        List<String> history = Data.getHistory();
+
+        if (output != null)
+        {
+            if (!output.equals(""))
+            {
+                history.add("AI: " + output);
+                Data.saveHistory(history);
+            }
+        }
+
         Output.setText("");
         Output.setMovementMethod(new ScrollingMovementMethod());
 
-        List<String> history = Data.getHistory();
         if (history.size() > 40)
         {
             for (int i = history.size() - 40; i < history.size(); i++)
@@ -798,6 +790,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         {
             Util.ToggleAdvanced(item_Advanced);
             Disable_AdvancedStuff();
+            btn_Discourage.setVisibility(View.VISIBLE);
         }
         else
         {
@@ -827,20 +820,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private void Enabled_AdvancedStuff()
     {
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.addRule(RelativeLayout.ABOVE, R.id.btn_Discourage);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.addRule(RelativeLayout.ABOVE, R.id.btn_Menu);
         params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        btn_Enter.setLayoutParams(params);
+        params.addRule(RelativeLayout.LEFT_OF, R.id.btn_WordFix);
+        btn_Discourage.setLayoutParams(params);
+        btn_Discourage.setText(R.string.discourage);
 
         btn_Encourage.setVisibility(View.VISIBLE);
         btn_Encourage.setClickable(true);
         btn_Encourage.setFocusableInTouchMode(true);
         btn_Encourage.setFocusable(true);
-
-        btn_Discourage.setVisibility(View.VISIBLE);
-        btn_Discourage.setClickable(true);
-        btn_Discourage.setFocusableInTouchMode(true);
-        btn_Discourage.setFocusable(true);
 
         img_Face.setVisibility(View.VISIBLE);
         img_Face.setImageResource(R.drawable.face_neutral);
@@ -852,17 +841,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         params.addRule(RelativeLayout.ABOVE, R.id.btn_Menu);
         params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
         params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        btn_Enter.setLayoutParams(params);
+        btn_Discourage.setLayoutParams(params);
+        btn_Discourage.setText(R.string.new_session);
 
         btn_Encourage.setVisibility(View.INVISIBLE);
         btn_Encourage.setClickable(false);
         btn_Encourage.setFocusableInTouchMode(false);
         btn_Encourage.setFocusable(false);
-
-        btn_Discourage.setVisibility(View.INVISIBLE);
-        btn_Discourage.setClickable(false);
-        btn_Discourage.setFocusableInTouchMode(false);
-        btn_Discourage.setFocusable(false);
 
         img_Face.setVisibility(View.INVISIBLE);
     }
@@ -936,11 +921,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
                 btn_Enter.setText(R.string.enter_button);
                 btn_Enter.setVisibility(View.VISIBLE);
+                btn_Discourage.setVisibility(View.VISIBLE);
 
                 if (Logic.Advanced)
                 {
                     btn_Encourage.setVisibility(View.VISIBLE);
-                    btn_Discourage.setVisibility(View.VISIBLE);
                     img_Face.setVisibility(View.VISIBLE);
                     img_Face.setImageResource(R.drawable.face_neutral);
                 }
@@ -1217,6 +1202,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setText(R.string.ok_button);
         btn_Enter.setVisibility(View.VISIBLE);
         Disable_AdvancedStuff();
+        btn_Discourage.setVisibility(View.INVISIBLE);
 
         String tips = "";
         tips += "Here are some tips for teaching the AI: \n\n";
@@ -1269,6 +1255,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setText(R.string.exit_app);
         btn_Enter.setVisibility(View.VISIBLE);
         Disable_AdvancedStuff();
+        btn_Discourage.setVisibility(View.INVISIBLE);
 
         String permissions = "";
         permissions += "This app requires the 'Storage' and 'Draw over other apps' permissions to function. \n\n";
@@ -1320,13 +1307,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
+        btn_Discourage.setVisibility(View.VISIBLE);
 
         if (Logic.Advanced)
         {
             Enabled_AdvancedStuff();
         }
 
-        ScrollHistory();
+        ScrollHistory(null);
 
         ShowKeyboard();
 
@@ -1342,13 +1330,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
+        btn_Discourage.setVisibility(View.VISIBLE);
 
         if (Logic.Advanced)
         {
             Enabled_AdvancedStuff();
         }
 
-        ScrollHistory();
+        ScrollHistory(null);
 
         ShowKeyboard();
 
@@ -1363,13 +1352,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
+        btn_Discourage.setVisibility(View.VISIBLE);
 
         if (Logic.Advanced)
         {
             Enabled_AdvancedStuff();
         }
 
-        ScrollHistory();
+        ScrollHistory(null);
 
         ShowKeyboard();
 
@@ -1387,12 +1377,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     public void Discourage(View view)
     {
         Util.CleanMemory();
-        Util.Discourage();
+
+        if (Logic.Advanced)
+        {
+            Util.Discourage();
+        }
 
         List<String> history = Data.getHistory();
         history.add("---New Session---");
         Data.saveHistory(history);
-        ScrollHistory();
+        ScrollHistory(null);
 
         Logic.NewInput = false;
     }

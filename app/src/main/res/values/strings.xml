@@ -16,4 +16,5 @@
     <string name="discourage">Discourage</string>
     <string name="advanced_on">Advanced Mode: On</string>
     <string name="advanced_off">Advanced Mode: Off</string>
+    <string name="new_session">New Session</string>
 </resources>

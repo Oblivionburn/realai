@@ -402,7 +402,7 @@ class Util
 
     private static int GetMin(List<Integer> Integer_List)
     {
-        int lowest_number = 0;
+        int lowest_number = Integer.MAX_VALUE;
 
         if (Integer_List.size() > 0)
         {

@@ -276,6 +276,10 @@ class Logic
             Util.AddTopics(input);
             last_response_thinking = input;
         }
+        else if (Initiation && topics.size() == 0)
+        {
+            topics.add(Util.Get_RandomWord());
+        }
 
         if (NewInput)
         {
@@ -292,7 +296,7 @@ class Logic
                 int int_random_choice = rand.nextInt(topics.size());
                 response = GenerateResponse(topics.get(int_random_choice));
 
-                //If nothing could be generated with the topic, change topic
+                //If nothing new could be generated with the topic, change topic
                 if (Initiation && response.equals(topics.get(int_random_choice)))
                 {
                     topics.clear();
@@ -309,6 +313,13 @@ class Logic
                     int int_random_choice = rand.nextInt(info.size());
                     response = info.get(int_random_choice);
                     bl_MatchFound = true;
+
+                    //If nothing could be generated with the topic, change topic
+                    if (Initiation && Util.RulesCheck(response).equals(last_response))
+                    {
+                        topics.clear();
+                        bl_MatchFound = false;
+                    }
                 }
 
                 //If none found, check for conditioned responses
@@ -323,18 +334,32 @@ class Logic
                         int int_random_choice = rand.nextInt(outputList.size());
                         response = outputList.get(int_random_choice);
                         bl_MatchFound = true;
+
+                        //If nothing could be generated with the topic, change topic
+                        if (Initiation && Util.RulesCheck(response).equals(last_response))
+                        {
+                            topics.clear();
+                            bl_MatchFound = false;
+                        }
                     }
                 }
 
                 //If none found, procedurally generate a response using the topic
                 if (!bl_MatchFound)
                 {
-                    Random rand = new Random();
-                    int int_random_choice = rand.nextInt(topics.size());
-                    response = GenerateResponse(topics.get(int_random_choice));
+                    if (topics.size() > 0)
+                    {
+                        Random rand = new Random();
+                        int int_random_choice = rand.nextInt(topics.size());
+                        response = GenerateResponse(topics.get(int_random_choice));
+                    }
+                    else
+                    {
+                        response = GenerateResponse(Util.Get_RandomWord());
+                    }
 
-                    //If nothing could be generated with the topic, change topic
-                    if (Initiation && response.equals(topics.get(int_random_choice)))
+                    //If nothing new could be generated with the topic, change topic
+                    if (Initiation && Util.RulesCheck(response).equals(last_response))
                     {
                         topics.clear();
                     }
