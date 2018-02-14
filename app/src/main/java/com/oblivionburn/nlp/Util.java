@@ -858,43 +858,46 @@ class Util
                 response = sb3.toString();
             }
 
-            //Make sure the first word is capitalized
-            char first_letter = response.charAt(0);
-            if (!Character.isUpperCase(first_letter))
+            if (response.length() > 0)
             {
-                String str_capital_letter = Character.toString(first_letter);
-                str_capital_letter = str_capital_letter.toUpperCase();
+                //Make sure the first word is capitalized
+                char first_letter = response.charAt(0);
+                if (!Character.isUpperCase(first_letter))
+                {
+                    String str_capital_letter = Character.toString(first_letter);
+                    str_capital_letter = str_capital_letter.toUpperCase();
+                    String str2 = response;
+                    StringBuilder sb2 = new StringBuilder(str2).delete(0, 1);
+                    sb2.insert(0, str_capital_letter);
+                    response = sb2.toString();
+                }
+
+                //Remove any empty spaces at the end
                 String str2 = response;
-                StringBuilder sb2 = new StringBuilder(str2).delete(0, 1);
-                sb2.insert(0, str_capital_letter);
-                response = sb2.toString();
-            }
+                StringBuilder sb2 = new StringBuilder(str2).delete(0, response.length() - 1);
+                char last_letter = sb2.charAt(0);
+                String str_last_letter = Character.toString(last_letter);
 
-            //Remove any empty spaces at the end
-            String str2 = response;
-            StringBuilder sb2 = new StringBuilder(str2).delete(0, response.length() - 1);
-            char last_letter = sb2.charAt(0);
-            String str_last_letter = Character.toString(last_letter);
+                while (str_last_letter.equals(" "))
+                {
+                    String str3 = response;
+                    StringBuilder sb3 = new StringBuilder(str3).delete(response.length() - 1, response.length());
+                    response = sb3.toString();
 
-            while (str_last_letter.equals(" "))
-            {
-                String str3 = response;
-                StringBuilder sb3 = new StringBuilder(str3).delete(response.length() - 1, response.length());
-                response = sb3.toString();
+                    String str4 = response;
+                    StringBuilder sb4 = new StringBuilder(str4).delete(0, response.length() - 1);
+                    last_letter = sb4.charAt(0);
 
-                String str4 = response;
-                StringBuilder sb4 = new StringBuilder(str4).delete(0, response.length() - 1);
-                last_letter = sb4.charAt(0);
+                    str_last_letter = Character.toString(last_letter);
+                }
 
-                str_last_letter = Character.toString(last_letter);
-            }
-
-            //Set an ending punctuation if one does not exist
-            if (!str_last_letter.equals(".") && !str_last_letter.equals("$") && !str_last_letter.equals("!"))
-            {
-                String str3 = response;
-                StringBuilder sb3 = new StringBuilder(str3).insert(response.length(), ".");
-                response = sb3.toString();
+                //Set an ending punctuation if one does not exist
+                if (!str_last_letter.equals(".") && !str_last_letter.equals("$") && !str_last_letter.equals("!"))
+                {
+                    String str3 = response;
+                    StringBuilder sb3 = new StringBuilder(str3).insert(response.length(), ".");
+                    response = sb3.toString();
+                }
             }
 
             //Learn the best ending punctuation from example

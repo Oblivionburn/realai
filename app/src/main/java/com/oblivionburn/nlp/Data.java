@@ -546,7 +546,10 @@ class Data
                     if (line.contains("#"))
                     {
                         int index = line.indexOf("~");
-                        result.add(line.substring(1, index));
+                        if (index > 1)
+                        {
+                            result.add(line.substring(1, index));
+                        }
                     }
                 }
                 br.close();

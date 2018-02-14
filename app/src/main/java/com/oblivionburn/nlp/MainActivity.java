@@ -77,6 +77,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_PermitsMissing = false;
     private boolean bl_Encourage_Pressed = false;
     private boolean bl_Discourage_Pressed = false;
+    private boolean bl_Bored;
+    private boolean bl_Thinking;
 
     private static Handler handle_thinking;
     private static Handler handle_attention;
@@ -92,6 +94,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         handle_thinking = new Handler();
         handle_attention = new Handler();
+
+        Output = new LiteText(getApplicationContext());
+        Input = new LiteText(getApplicationContext());
+        txt_WordFix = new LiteText(getApplicationContext());
+        sp_WordFix = new Spinner(getApplicationContext());
+        btn_WordFix = new Button(getApplicationContext());
+        btn_Enter = new Button(getApplicationContext());
+        btn_Menu = new Button(getApplicationContext());
+        btn_Encourage = new Button(getApplicationContext());
+        btn_Discourage = new Button(getApplicationContext());
+        img_Face = new ImageView(getApplicationContext());
 
         Input = findViewById(R.id.txt_Input);
 
@@ -437,16 +450,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         @Override
         public void run()
         {
-            if (int_Delay == 0)
+            if (!bl_Bored)
             {
-                int_Delay++;
+                if (int_Delay == 0)
+                {
+                    int_Delay++;
+                }
+                else if (int_Delay == 1 &&
+                        !bl_DelayForever)
+                {
+                    bl_Bored = true;
+                    AttentionSpan();
+                    int_Delay = 0;
+                }
             }
-            else if (int_Delay == 1 &&
-                    !bl_DelayForever)
-            {
-                AttentionSpan();
-                int_Delay = 0;
-            }
+
             handle_attention.postDelayed(Timer, int_Time);
         }
     };
@@ -561,11 +579,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
         else if (bl_Ready)
         {
+            bl_Ready = false;
+            Respond.run();
+        }
+    }
+
+    private final Runnable Respond = new Runnable()
+    {
+        @Override
+        public void run()
+        {
             String input = Input.getText().toString();
             if (input.length() > 0)
             {
                 Logic.Initiation = false;
                 Logic.UserInput = true;
+
                 String[] wordArray = Logic.prepInput(input);
 
                 if (wordArray != null)
@@ -575,16 +604,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     history.add("User: " + input);
                     Data.saveHistory(history);
 
-                    String output = Logic.Respond(wordArray, input);
-                    ScrollHistory(output);
+                    final String output = Logic.Respond(wordArray, input);
+
+                    Output.post(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            ScrollHistory(output);
+                            img_Face.setImageResource(R.drawable.face_neutral);
+                        }
+                    });
+
                     Util.ClearLeftovers();
                 }
-
-                Input.setText("");
-                img_Face.setImageResource(R.drawable.face_neutral);
             }
         }
-    }
+    };
 
     private void ScrollHistory(String output)
     {
@@ -618,6 +654,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
 
         Output.setSelection(Output.getText().length());
+
+        if (bl_Bored)
+        {
+            bl_Bored = false;
+        }
+
+        if (!bl_Ready)
+        {
+            Input.setText("");
+            bl_Ready = true;
+        }
     }
 
     private void ScrollThoughts()
@@ -1216,30 +1263,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         tips += "2. It will generate stuff that sounds nonsensical early on... this is part of the learning process, " +
                 "similar to the way children phrase things in ways that don't quite make sense early on. \n\n";
 
-        tips += "3. The AI runs in real-time and will try to initiate conversation on its own if idle for too long. " +
+        tips += "3. Use complete sentences when responding. Start with a capital letter and end with a punctuation mark. \n\n";
+
+        tips += "4. Limit your responses to single sentences/questions. \n\n";
+
+        tips += "5. Avoid conjunctions (use \"it is\" instead of \"it's\"). \n\n";
+
+        tips += "6. The AI runs in real-time and will try to initiate conversation on its own if idle for too long. " +
                 "To adjust how long it waits before assuming you're idle, or to make it never check for idleness, " +
                 "check out the Set Delay option in the Menu. \n\n";
 
-        tips += "4. If it says something that doesn't make sense, you can discourage the AI by pressing the Discourage button. " +
-                "This will also reset the session so that whatever you say next WILL NOT be considered a response to what was " +
-                "last said. \n\n";
-
-        tips += "5. In contrast to Discouraging the AI, there is a button to Encourage it... pressing said button will let it know " +
-                "it has used words properly. If you would like a more technical breakdown of how exactly " +
-                "this works, check here: http://realai.freeforums.net/thread/18/expect-ai?page=1&scrollTo=50 \n\n";
-
-        tips += "6. The AI cannot see/hear/taste/smell/feel any 'things' you refer to, so it can never have any contextual " +
+        tips += "7. The AI cannot see/hear/taste/smell/feel any 'things' you refer to, so it can never have any contextual " +
                 "understanding of what exactly the 'thing' is (the way you understand it). This also means it'll " +
                 "never understand you trying to reference it (or yourself) directly, as it can never have a concept of " +
                 "anything external being something different from it without spatial recognition gained from sight/touch/sound. \n\n";
 
-        tips += "7. Use complete sentences when responding. Start with a capital letter and end with a punctuation mark. \n\n";
-
-        tips += "8. Limit your responses to single sentences/questions. \n\n";
-
-        tips += "9. Avoid conjunctions (use \"it is\" instead of \"it's\"). \n\n";
-
-        tips += "10. In general... keep it simple. The simpler you speak to it, the better it learns. \n\n";
+        tips += "8. In general... keep it simple. The simpler you speak to it, the better it learns. " +
+                "For more information and details of how the AI works, check the Forum: http://realai.freeforums.net/thread/18/expect-ai?page=1&scrollTo=50 \n\n";
 
         Output.setMovementMethod(LinkMovementMethod.getInstance());
         Output.setText(tips);
