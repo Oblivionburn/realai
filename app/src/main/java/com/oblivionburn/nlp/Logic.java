@@ -13,6 +13,9 @@ class Logic
     static Boolean NewInput = false;
     static Boolean UserInput = false;
     static Boolean Advanced = false;
+    static Boolean TopicBased = true;
+    static Boolean ConditionBased = true;
+    static Boolean ProceduralBased = true;
 
     static String last_response_thinking = "";
 
@@ -305,25 +308,28 @@ class Logic
             else
             {
                 //Check for existing responses to phrases using the topics
-                List<String> info = Util.Get_Related(topics);
-                if (info.size() > 0)
+                if (TopicBased)
                 {
-                    //If some found, pick one at random
-                    Random rand = new Random();
-                    int int_random_choice = rand.nextInt(info.size());
-                    response = info.get(int_random_choice);
-                    bl_MatchFound = true;
-
-                    //If nothing could be generated with the topic, change topic
-                    if (Initiation && Util.RulesCheck(response).equals(last_response))
+                    List<String> info = Util.Get_Related(topics);
+                    if (info.size() > 0)
                     {
-                        topics.clear();
-                        bl_MatchFound = false;
+                        //If some found, pick one at random
+                        Random rand = new Random();
+                        int int_random_choice = rand.nextInt(info.size());
+                        response = info.get(int_random_choice);
+                        bl_MatchFound = true;
+
+                        //If nothing could be generated with the topic, change topic
+                        if (Initiation && Util.RulesCheck(response).equals(last_response))
+                        {
+                            topics.clear();
+                            bl_MatchFound = false;
+                        }
                     }
                 }
 
                 //If none found, check for conditioned responses
-                if (!bl_MatchFound)
+                if (!bl_MatchFound && ConditionBased)
                 {
                     String temp_input = Util.PunctuationFix_ForInput(input);
                     List<String> outputList = Data.getOutputList_NoTopics(temp_input);
@@ -345,7 +351,7 @@ class Logic
                 }
 
                 //If none found, procedurally generate a response using the topic
-                if (!bl_MatchFound)
+                if (!bl_MatchFound && ProceduralBased)
                 {
                     if (topics.size() > 0)
                     {
@@ -367,10 +373,18 @@ class Logic
             }
 
             response = Util.RulesCheck(response);
-            output = response;
-            last_response = response;
 
-            NewInput = true;
+            if (!response.isEmpty())
+            {
+                output = response;
+                last_response = response;
+
+                NewInput = true;
+            }
+            else
+            {
+                output = "";
+            }
         }
         else
         {
@@ -416,7 +430,7 @@ class Logic
 
                 if (frequencies.size() > 0)
                 {
-                    int_highest_f = Util.GetMax(frequencies);
+                    int_highest_f = Util.Choose(frequencies);
                     List<Integer> RandomOnes = new ArrayList<>();
                     for (int b = 0; b < frequencies.size(); b++)
                     {
@@ -493,7 +507,7 @@ class Logic
 
                 if (frequencies.size() > 0)
                 {
-                    int_highest_f = Util.GetMax(frequencies);
+                    int_highest_f = Util.Choose(frequencies);
                     List<Integer> RandomOnes = new ArrayList<>();
                     for (int b = 0; b < frequencies.size(); b++)
                     {

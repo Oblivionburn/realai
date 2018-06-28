@@ -14,7 +14,8 @@
     <string name="tips">Tips</string>
     <string name="encourage">Encourage</string>
     <string name="discourage">Discourage</string>
-    <string name="advanced_on">Advanced Mode: On</string>
-    <string name="advanced_off">Advanced Mode: Off</string>
+    <string name="advanced_on">Advanced Mode: true</string>
+    <string name="advanced_off">Advanced Mode: false</string>
     <string name="new_session">New Session</string>
+    <string name="response_types">Set Response Types</string>
 </resources>

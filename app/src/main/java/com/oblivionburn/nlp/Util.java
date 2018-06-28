@@ -367,29 +367,33 @@ class Util
         if (Logic.Advanced)
         {
             Logic.Advanced = false;
-            item.setTitle("Advanced Mode: Off");
+            item.setTitle("Advanced Mode: false");
 
             if (MainActivity.bl_DelayForever)
             {
-                Data.setConfig("Infinite", "Off");
+                Data.setConfig("Infinite", "false", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
             }
             else
             {
-                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "Off");
+                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "false", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
             }
         }
         else
         {
             Logic.Advanced = true;
-            item.setTitle("Advanced Mode: On");
+            item.setTitle("Advanced Mode: true");
 
             if (MainActivity.bl_DelayForever)
             {
-                Data.setConfig("Infinite", "On");
+                Data.setConfig("Infinite", "true", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
             }
             else
             {
-                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "On");
+                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "true", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
             }
         }
     }
@@ -434,6 +438,30 @@ class Util
         }
 
         return highest_number;
+    }
+
+    static int Choose(List<Integer> Integer_List)
+    {
+        Random random;
+        int max = GetMax(Integer_List);
+        int result = 0;
+
+        if (Integer_List.size() > 0)
+        {
+            for (int i : Integer_List)
+            {
+                random = new Random();
+                int choice = random.nextInt(max);
+
+                if (i >= choice)
+                {
+                    result = i;
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     static boolean tryParseInt(String value)

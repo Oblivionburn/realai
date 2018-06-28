@@ -24,7 +24,7 @@ class Data
             writer = new BufferedWriter(new FileWriter(file));
             writer.write("Delay:10 seconds");
             writer.newLine();
-            writer.write("Advanced:Off");
+            writer.write("Advanced:False");
             writer.close();
         }
         catch(IOException ex)
@@ -33,7 +33,7 @@ class Data
         }
     }
 
-    static void setConfig(String delay, String advanced)
+    static void setConfig(String delay, String advanced, String topic, String condition, String procedural)
     {
         BufferedWriter writer;
         try
@@ -47,6 +47,12 @@ class Data
             writer.write("Delay:" + delay);
             writer.newLine();
             writer.write("Advanced:" + advanced);
+            writer.newLine();
+            writer.write("Topic Response Method:" + topic);
+            writer.newLine();
+            writer.write("Condition Response Method:" + condition);
+            writer.newLine();
+            writer.write("Procedural Response Method:" + procedural);
             writer.close();
         }
         catch(IOException ex)
@@ -100,6 +106,96 @@ class Data
             while ((line = br.readLine()) != null)
             {
                 if (line.contains("Advanced:"))
+                {
+                    Config = line.split(":");
+                    result = Config[1];
+                }
+            }
+            br.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    static String getTopicBased()
+    {
+        String Config[];
+        String result = "";
+
+        File file = new File(MainActivity.Brain_dir, "Config.ini");
+
+        try
+        {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+
+            String line;
+            while ((line = br.readLine()) != null)
+            {
+                if (line.contains("Topic Response Method:"))
+                {
+                    Config = line.split(":");
+                    result = Config[1];
+                }
+            }
+            br.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    static String getConditionBased()
+    {
+        String Config[];
+        String result = "";
+
+        File file = new File(MainActivity.Brain_dir, "Config.ini");
+
+        try
+        {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+
+            String line;
+            while ((line = br.readLine()) != null)
+            {
+                if (line.contains("Condition Response Method:"))
+                {
+                    Config = line.split(":");
+                    result = Config[1];
+                }
+            }
+            br.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    static String getProceduralBased()
+    {
+        String Config[];
+        String result = "";
+
+        File file = new File(MainActivity.Brain_dir, "Config.ini");
+
+        try
+        {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+
+            String line;
+            while ((line = br.readLine()) != null)
+            {
+                if (line.contains("Procedural Response Method:"))
                 {
                     Config = line.split(":");
                     result = Config[1];

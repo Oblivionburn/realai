@@ -3,14 +3,14 @@ apply plugin: 'com.android.application'
 //noinspection GroovyMissingReturnStatement
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.oblivionburn.nlp"
         minSdkVersion 14
         targetSdkVersion 26
-        versionCode 80
-        versionName "4.4"
+        versionCode 81
+        versionName "4.5"
     }
     buildTypes {
         release {

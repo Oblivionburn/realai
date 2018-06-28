@@ -66,6 +66,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private int int_Delay = 0;
     private int delay_selection = 0;
+    private int response_selection = 0;
     private int wordfix_selection = 0;
 
     private boolean bl_Typing = false;
@@ -73,6 +74,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Thought = false;
     private boolean bl_WordFix = false;
     private boolean bl_Delay = false;
+    private boolean bl_Responses = false;
     private boolean bl_Tips = false;
     private boolean bl_PermitsMissing = false;
     private boolean bl_Encourage_Pressed = false;
@@ -224,14 +226,50 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             String advanced = Data.getAdvanced();
             switch (advanced)
             {
-                case "Off":
+                case "false":
                     Logic.Advanced = false;
                     Disable_AdvancedStuff();
                     break;
 
-                case "On":
+                case "true":
                     Logic.Advanced = true;
                     Enabled_AdvancedStuff();
+                    break;
+            }
+
+            String topic = Data.getTopicBased();
+            switch (topic)
+            {
+                case "true":
+                    Logic.TopicBased = true;
+                    break;
+
+                case "false":
+                    Logic.TopicBased = false;
+                    break;
+            }
+
+            String condition = Data.getConditionBased();
+            switch (condition)
+            {
+                case "true":
+                    Logic.ConditionBased = true;
+                    break;
+
+                case "false":
+                    Logic.ConditionBased = false;
+                    break;
+            }
+
+            String procedural = Data.getProceduralBased();
+            switch (condition)
+            {
+                case "true":
+                    Logic.ProceduralBased = true;
+                    break;
+
+                case "false":
+                    Logic.ProceduralBased = false;
                     break;
             }
         }
@@ -560,8 +598,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     //After Enter
     public void onSend(View view)
     {
-        if (bl_WordFix ||
-            bl_Delay)
+        if (bl_WordFix || bl_Delay || bl_Responses)
         {
             CloseWordFix();
         }
@@ -920,12 +957,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         if (Logic.Advanced)
         {
             MenuItem advanced = menu.findItem(R.id.advanced);
-            advanced.setTitle("Advanced Mode: On");
+            advanced.setTitle("Advanced Mode: true");
         }
         else
         {
             MenuItem advanced = menu.findItem(R.id.advanced);
-            advanced.setTitle("Advanced Mode: Off");
+            advanced.setTitle("Advanced Mode: false");
         }
 
         return true;
@@ -960,7 +997,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         if (!bl_Thought && !bl_Tips)
         {
-            if (!bl_WordFix && !bl_Delay)
+            if (!bl_WordFix && !bl_Delay && !bl_Responses)
             {
                 Output.setVisibility(View.VISIBLE);
                 Input.setVisibility(View.VISIBLE);
@@ -1017,6 +1054,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 DisplayDelay();
                 return true;
 
+            case R.id.response_types:
+                DisplayResponses();
+                return true;
+
             case R.id.erase_memory:
                 Acknowledge_Erase();
                 return true;
@@ -1051,6 +1092,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         else if (bl_Delay)
         {
             delay_selection = parent.getSelectedItemPosition();
+        }
+        else if (bl_Responses)
+        {
+            response_selection = parent.getSelectedItemPosition();
+            if (response_selection == 0)
+            {
+                btn_WordFix.setText(Logic.TopicBased.toString());
+            }
+            else if (response_selection == 1)
+            {
+                btn_WordFix.setText(Logic.ConditionBased.toString());
+            }
+            else if (response_selection == 2)
+            {
+                btn_WordFix.setText(Logic.ProceduralBased.toString());
+            }
         }
     }
 
@@ -1093,6 +1150,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             txt_WordFix.requestFocus();
 
             //Set Button
+            btn_WordFix.setText(R.string.btn_accept);
             btn_WordFix.setVisibility(View.VISIBLE);
             btn_WordFix.setClickable(true);
             btn_WordFix.setFocusable(true);
@@ -1181,39 +1239,56 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             data = Data.getWords();
             data.get(wordfix_selection).setWord(newWord);
             Data.saveWords(data);
+
+            CloseWordFix();
         }
         else if (bl_Delay)
         {
             if (delay_selection == 3)
             {
-                if (Logic.Advanced)
-                {
-                    Data.setConfig("Infinite", "On");
-                }
-                else
-                {
-                    Data.setConfig("Infinite", "Off");
-                }
-
+                Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
                 bl_DelayForever = true;
             }
             else
             {
-                if (Logic.Advanced)
-                {
-                    Data.setConfig(((delay_selection * 10) + 10) + " seconds", "On");
-                }
-                else
-                {
-                    Data.setConfig(((delay_selection * 10) + 10) + " seconds", "Off");
-                }
-
+                Data.setConfig(((delay_selection * 10) + 10) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
                 int_Time = ((delay_selection * 10) + 10) * 1000;
                 bl_DelayForever = false;
             }
-        }
 
-        CloseWordFix();
+            CloseWordFix();
+        }
+        else if (bl_Responses)
+        {
+            if (response_selection == 0)
+            {
+                Logic.TopicBased = !Logic.TopicBased;
+                btn_WordFix.setText(Logic.TopicBased.toString());
+            }
+            else if (response_selection == 1)
+            {
+                Logic.ConditionBased = !Logic.ConditionBased;
+                btn_WordFix.setText(Logic.ConditionBased.toString());
+            }
+            else if (response_selection == 2)
+            {
+                Logic.ProceduralBased = !Logic.ProceduralBased;
+                btn_WordFix.setText(Logic.ProceduralBased.toString());
+            }
+
+            if (delay_selection == 3)
+            {
+                Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
+            }
+            else
+            {
+                Data.setConfig(((delay_selection * 10) + 10) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                        Logic.ProceduralBased.toString());
+            }
+        }
     }
 
     private void DisplayDelay()
@@ -1234,12 +1309,54 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         sp_WordFix.setFocusable(true);
 
         //Set Button
+        btn_WordFix.setText(R.string.btn_accept);
         btn_WordFix.setVisibility(View.VISIBLE);
         btn_WordFix.setClickable(true);
         btn_WordFix.setFocusable(true);
 
         stopTimer();
         bl_Delay = true;
+    }
+
+    private void DisplayResponses()
+    {
+        btn_Enter.setText(R.string.ok_button);
+        btn_Enter.setVisibility(View.VISIBLE);
+
+        //Set Spinner
+        List<String> methods = new ArrayList<>();
+        methods.add("Topic Response Method");
+        methods.add("Condition Response Method");
+        methods.add("Procedural Response Method");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, methods);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp_WordFix.setAdapter(adapter);
+        sp_WordFix.setSelection(response_selection);
+        sp_WordFix.setVisibility(View.VISIBLE);
+        sp_WordFix.setClickable(true);
+        sp_WordFix.setFocusable(true);
+
+        //Set Button
+        if (response_selection == 0)
+        {
+            btn_WordFix.setText(Logic.TopicBased.toString());
+        }
+        else if (response_selection == 1)
+        {
+            btn_WordFix.setText(Logic.ConditionBased.toString());
+        }
+        else if (response_selection == 2)
+        {
+            btn_WordFix.setText(Logic.ProceduralBased.toString());
+        }
+
+        btn_WordFix.setVisibility(View.VISIBLE);
+        btn_WordFix.setClickable(true);
+        btn_WordFix.setFocusable(true);
+
+        stopTimer();
+        bl_Responses = true;
     }
 
     private void DisplayTips()
@@ -1267,7 +1384,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         tips += "4. Limit your responses to single sentences/questions. \n\n";
 
-        tips += "5. Avoid conjunctions (use \"it is\" instead of \"it's\"). \n\n";
+        tips += "5. Avoid contractions (use \"it is\" instead of \"it's\"). \n\n";
 
         tips += "6. The AI runs in real-time and will try to initiate conversation on its own if idle for too long. " +
                 "To adjust how long it waits before assuming you're idle, or to make it never check for idleness, " +
@@ -1360,6 +1477,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         bl_WordFix = false;
         bl_Delay = false;
+        bl_Responses = false;
 
         startTimer();
     }
