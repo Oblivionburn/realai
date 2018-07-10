@@ -18,7 +18,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -76,11 +75,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Delay = false;
     private boolean bl_Responses = false;
     private boolean bl_Tips = false;
-    private boolean bl_PermitsMissing = false;
     private boolean bl_Encourage_Pressed = false;
     private boolean bl_Discourage_Pressed = false;
     private boolean bl_Bored;
     private boolean bl_Thinking;
+
+    private final int STORAGE_PERMISSION = 123;
 
     private static Handler handle_thinking;
     private static Handler handle_attention;
@@ -147,7 +147,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
         else
         {
-            DisplayPermissions();
+            stopTimer();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION);
         }
     }
 
@@ -262,7 +263,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             }
 
             String procedural = Data.getProceduralBased();
-            switch (condition)
+            switch (procedural)
             {
                 case "true":
                     Logic.ProceduralBased = true;
@@ -430,20 +431,28 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private boolean hasPermissions()
     {
-        boolean result = true;
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        return (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+    {
+        switch (requestCode)
         {
-            if (!Settings.canDrawOverlays(this))
+            case STORAGE_PERMISSION:
             {
-                result = false;
-            }
-            else if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            {
-                result = false;
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                {
+                    bl_Ready = true;
+                    DisplayTips();
+                }
+                else
+                {
+                    onDestroy();
+                }
             }
         }
-
-        return result;
     }
 
     @Override
@@ -471,10 +480,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         else if (bl_Tips)
         {
             CloseTips();
-        }
-        else if (bl_PermitsMissing)
-        {
-            onDestroy();
         }
         else
         {
@@ -609,10 +614,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         else if (bl_Tips)
         {
             CloseTips();
-        }
-        else if (bl_PermitsMissing)
-        {
-            onDestroy();
         }
         else if (bl_Ready)
         {
@@ -1403,42 +1404,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         stopTimer();
         bl_Tips = true;
-    }
-
-    private void DisplayPermissions()
-    {
-        Input.setVisibility(View.INVISIBLE);
-        btn_Menu.setVisibility(View.INVISIBLE);
-        btn_Enter.setText(R.string.exit_app);
-        btn_Enter.setVisibility(View.VISIBLE);
-        Disable_AdvancedStuff();
-        btn_Discourage.setVisibility(View.INVISIBLE);
-
-        String permissions = "";
-        permissions += "This app requires the 'Storage' and 'Draw over other apps' permissions to function. \n\n";
-
-        permissions += "To enable the 'Storage' permission: \n";
-        permissions += "1. Exit the app \n";
-        permissions += "2. Go to Settings \n";
-        permissions += "3. Go to Apps \n";
-        permissions += "4. Find 'Real AI Text' in the list and tap it. \n";
-        permissions += "5. Tap 'Permissions'. \n";
-        permissions += "6. Toggle 'Storage' to ON. \n\n";
-
-        permissions += "To enable the 'Draw over other apps' permission: \n";
-        permissions += "1. Exit the app \n";
-        permissions += "2. Go to Settings \n";
-        permissions += "3. Go to Apps \n";
-        permissions += "4. On the top right, tap the gear icon. \n";
-        permissions += "5. Under Advanced, chose 'Draw over other apps' \n";
-        permissions += "6. Find 'Real AI Text' in the list and tap it. \n";
-        permissions += "7. Toggle 'Permit drawing over other apps' to ON. \n";
-
-        Output.setMovementMethod(LinkMovementMethod.getInstance());
-        Output.setText(permissions);
-
-        stopTimer();
-        bl_PermitsMissing = true;
     }
 
     private void CloseWordFix()
