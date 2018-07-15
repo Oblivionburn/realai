@@ -30,7 +30,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -39,7 +38,6 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -61,6 +59,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private Button btn_Menu = null;
     private Button btn_Encourage = null;
     private Button btn_Discourage = null;
+    private Button btn_NewSession = null;
     private ImageView img_Face = null;
 
     private int int_Delay = 0;
@@ -106,6 +105,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu = new Button(getApplicationContext());
         btn_Encourage = new Button(getApplicationContext());
         btn_Discourage = new Button(getApplicationContext());
+        btn_NewSession = new Button(getApplicationContext());
         img_Face = new ImageView(getApplicationContext());
 
         Input = findViewById(R.id.txt_Input);
@@ -115,14 +115,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         btn_Enter = findViewById(R.id.btn_Enter);
         btn_Menu = findViewById(R.id.btn_Menu);
+        btn_Encourage = findViewById(R.id.btn_Encourage);
+        btn_Discourage = findViewById(R.id.btn_Discourage);
+        btn_NewSession = findViewById(R.id.btn_NewSession);
+        btn_WordFix = findViewById(R.id.btn_WordFix);
 
         sp_WordFix = findViewById(R.id.sp_WordFix);
         sp_WordFix.setOnItemSelectedListener(this);
         txt_WordFix = findViewById(R.id.txt_WordFix);
-        btn_WordFix = findViewById(R.id.btn_WordFix);
-
-        btn_Encourage = findViewById(R.id.btn_Encourage);
-        btn_Discourage = findViewById(R.id.btn_Discourage);
 
         img_Face = findViewById(R.id.img_Face);
 
@@ -881,8 +881,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         if (Logic.Advanced)
         {
             Util.ToggleAdvanced(item_Advanced);
-            Disable_AdvancedStuff();
-            btn_Discourage.setVisibility(View.VISIBLE);
         }
         else
         {
@@ -904,24 +902,27 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     }
                 }
             };
-            Alert(dialogClickListener, "Warning: Advanced mode will force the AI to only use procedurally generated responses and allow its thinking to modify data. " +
+            Alert(dialogClickListener, "Warning: Advanced mode will force the AI to only use procedurally generated responses and allow its thinking to modify its brain. " +
                     "This mode is not recommended and should only be used for the sake of science. Are you sure you want to enable this?");
         }
     }
 
     private void Enabled_AdvancedStuff()
     {
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.addRule(RelativeLayout.ABOVE, R.id.btn_Menu);
-        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        params.addRule(RelativeLayout.LEFT_OF, R.id.btn_WordFix);
-        btn_Discourage.setLayoutParams(params);
-        btn_Discourage.setText(R.string.discourage);
-
         btn_Encourage.setVisibility(View.VISIBLE);
         btn_Encourage.setClickable(true);
         btn_Encourage.setFocusableInTouchMode(true);
         btn_Encourage.setFocusable(true);
+
+        btn_Discourage.setVisibility(View.VISIBLE);
+        btn_Discourage.setClickable(true);
+        btn_Discourage.setFocusableInTouchMode(true);
+        btn_Discourage.setFocusable(true);
+
+        btn_NewSession.setVisibility(View.VISIBLE);
+        btn_NewSession.setClickable(true);
+        btn_NewSession.setFocusableInTouchMode(true);
+        btn_NewSession.setFocusable(true);
 
         img_Face.setVisibility(View.VISIBLE);
         img_Face.setImageResource(R.drawable.face_neutral);
@@ -929,17 +930,20 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void Disable_AdvancedStuff()
     {
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.addRule(RelativeLayout.ABOVE, R.id.btn_Menu);
-        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        btn_Discourage.setLayoutParams(params);
-        btn_Discourage.setText(R.string.new_session);
-
         btn_Encourage.setVisibility(View.INVISIBLE);
         btn_Encourage.setClickable(false);
         btn_Encourage.setFocusableInTouchMode(false);
         btn_Encourage.setFocusable(false);
+
+        btn_Discourage.setVisibility(View.INVISIBLE);
+        btn_Discourage.setClickable(false);
+        btn_Discourage.setFocusableInTouchMode(false);
+        btn_Discourage.setFocusable(false);
+
+        btn_NewSession.setVisibility(View.INVISIBLE);
+        btn_NewSession.setClickable(false);
+        btn_NewSession.setFocusableInTouchMode(false);
+        btn_NewSession.setFocusable(false);
 
         img_Face.setVisibility(View.INVISIBLE);
     }
@@ -988,9 +992,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         Input.setVisibility(View.INVISIBLE);
         btn_Enter.setVisibility(View.INVISIBLE);
         btn_Menu.setVisibility(View.INVISIBLE);
-        btn_Encourage.setVisibility(View.INVISIBLE);
-        btn_Discourage.setVisibility(View.INVISIBLE);
-        img_Face.setVisibility(View.INVISIBLE);
+        Disable_AdvancedStuff();
 
         HideKeyboard();
 
@@ -1013,14 +1015,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
                 btn_Enter.setText(R.string.enter_button);
                 btn_Enter.setVisibility(View.VISIBLE);
-                btn_Discourage.setVisibility(View.VISIBLE);
-
-                if (Logic.Advanced)
-                {
-                    btn_Encourage.setVisibility(View.VISIBLE);
-                    img_Face.setVisibility(View.VISIBLE);
-                    img_Face.setImageResource(R.drawable.face_neutral);
-                }
+                Enabled_AdvancedStuff();
 
                 startTimer();
                 startThinking();
@@ -1301,7 +1296,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void DisplayDelay()
     {
-        //Set Spinner
         List<String> delays = new ArrayList<>();
         delays.add("10 seconds");
         delays.add("20 seconds");
@@ -1316,7 +1310,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         sp_WordFix.setClickable(true);
         sp_WordFix.setFocusable(true);
 
-        //Set Button
         btn_WordFix.setText(R.string.btn_accept);
         btn_WordFix.setVisibility(View.VISIBLE);
         btn_WordFix.setClickable(true);
@@ -1374,7 +1367,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setText(R.string.ok_button);
         btn_Enter.setVisibility(View.VISIBLE);
         Disable_AdvancedStuff();
-        btn_Discourage.setVisibility(View.INVISIBLE);
 
         String tips = "";
         tips += "Here are some tips for teaching the AI: \n\n";
@@ -1388,22 +1380,29 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         tips += "2. It will generate stuff that sounds nonsensical early on... this is part of the learning process, " +
                 "similar to the way children phrase things in ways that don't quite make sense early on. \n\n";
 
-        tips += "3. Use complete sentences when responding. Start with a capital letter and end with a punctuation mark. \n\n";
+        tips += "3. If it says something that doesn't make sense, you can discourage the AI by pressing the Discourage button. " +
+                "This will also reset the session so that whatever you say next won't be considered a response to what was " +
+                "last said. \n\n";
 
-        tips += "4. Limit your responses to single sentences/questions. \n\n";
+        tips += "4. In contrast to Discouraging the AI, there is a button to Encourage it and let it know " +
+                "it has used words properly. \n\n";
 
-        tips += "5. Avoid contractions (use \"it is\" instead of \"it's\"). \n\n";
+        tips += "5. Limit your response to a single sentence or question. \n\n";
 
-        tips += "6. The AI runs in real-time and will try to initiate conversation on its own if idle for too long. " +
+        tips += "6. Use complete sentences when responding. Start with a capital letter and end with a punctuation mark. \n\n";
+
+        tips += "7. Avoid contractions (use \"it is\" instead of \"it's\"). \n\n";
+
+        tips += "8. The AI runs in real-time and will try to initiate conversation on its own if idle for too long. " +
                 "To adjust how long it waits before assuming you're idle, or to make it never check for idleness, " +
                 "check out the Set Delay option in the Menu. \n\n";
 
-        tips += "7. The AI cannot see/hear/taste/smell/feel any 'things' you refer to, so it can never have any contextual " +
+        tips += "9. The AI cannot see/hear/taste/smell/feel any 'things' you refer to, so it can never have any contextual " +
                 "understanding of what exactly the 'thing' is (the way you understand it). This also means it'll " +
                 "never understand you trying to reference it (or yourself) directly, as it can never have a concept of " +
                 "anything external being something different from it without spatial recognition gained from sight/touch/sound. \n\n";
 
-        tips += "8. In general... keep it simple. The simpler you speak to it, the better it learns. " +
+        tips += "10. In general... keep it simple. The simpler you speak to it, the better it learns. " +
                 "For more information and details of how the AI works, check the Forum: http://realai.freeforums.net/thread/18/expect-ai?page=1&scrollTo=50 \n\n";
 
         Output.setMovementMethod(LinkMovementMethod.getInstance());
@@ -1436,12 +1435,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-
-        if (Logic.Advanced)
-        {
-            Enabled_AdvancedStuff();
-        }
+        Enabled_AdvancedStuff();
 
         ScrollHistory(null);
 
@@ -1460,12 +1454,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-
-        if (Logic.Advanced)
-        {
-            Enabled_AdvancedStuff();
-        }
+        Enabled_AdvancedStuff();
 
         ScrollHistory(null);
 
@@ -1482,12 +1471,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Menu.setVisibility(View.VISIBLE);
         btn_Enter.setText(R.string.enter_button);
         btn_Enter.setVisibility(View.VISIBLE);
-        btn_Discourage.setVisibility(View.VISIBLE);
-
-        if (Logic.Advanced)
-        {
-            Enabled_AdvancedStuff();
-        }
+        Enabled_AdvancedStuff();
 
         ScrollHistory(null);
 
@@ -1501,17 +1485,33 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void Encourage(View view)
     {
+        Util.CleanMemory();
         Util.Encourage();
+
+        List<String> history = Data.getHistory();
+        history.add("---New Session---");
+        Data.saveHistory(history);
+        ScrollHistory(null);
+
+        Logic.NewInput = false;
     }
 
     public void Discourage(View view)
     {
         Util.CleanMemory();
+        Util.Discourage();
 
-        if (Logic.Advanced)
-        {
-            Util.Discourage();
-        }
+        List<String> history = Data.getHistory();
+        history.add("---New Session---");
+        Data.saveHistory(history);
+        ScrollHistory(null);
+
+        Logic.NewInput = false;
+    }
+
+    public void NewSession(View view)
+    {
+        Util.CleanMemory();
 
         List<String> history = Data.getHistory();
         history.add("---New Session---");

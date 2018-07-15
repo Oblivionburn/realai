@@ -359,7 +359,11 @@ class Util
                 EraseMemory(child);
             }
         }
-        fileOrDirectory.delete();
+
+        if (!fileOrDirectory.getName().contains("Config"))
+        {
+            fileOrDirectory.delete();
+        }
     }
 
     static void ToggleAdvanced(MenuItem item)
