@@ -79,8 +79,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Bored;
     private boolean bl_Thinking;
 
-    private final int STORAGE_PERMISSION = 123;
-
     private static Handler handle_thinking;
     private static Handler handle_attention;
     private boolean KeyboardOpen;
@@ -140,15 +138,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             }
         });
 
-        if (hasPermissions())
+        if (isStoragePermissionGranted())
         {
             bl_Ready = true;
             DisplayTips();
-        }
-        else
-        {
-            stopTimer();
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION);
         }
     }
 
@@ -429,36 +422,39 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         });
     }
 
-    private boolean hasPermissions()
+    public  boolean isStoragePermissionGranted()
     {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT >= 23)
         {
-            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
             {
+                return true;
+            }
+            else
+            {
+                stopTimer();
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
                 return false;
             }
         }
-
-        return true;
+        else
+        {
+            return true;
+        }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
     {
-        switch (requestCode)
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
         {
-            case STORAGE_PERMISSION:
-            {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    bl_Ready = true;
-                    DisplayTips();
-                }
-                else
-                {
-                    onDestroy();
-                }
-            }
+            bl_Ready = true;
+            DisplayTips();
+        }
+        else
+        {
+            onDestroy();
         }
     }
 
