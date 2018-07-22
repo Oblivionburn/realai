@@ -44,7 +44,7 @@ class Logic
     private static String[] prepInput_CreateWordArray(String input)
     {
         String[] wordArray;
-        String[] reserved = {"|", "\\", "*", "<", "\"", ":", ">"};
+        String[] reserved = {"|", "\\", "*", "<", "\"", ":", ">", "#"};
         String result = input;
 
         List<String> doc_chars = new ArrayList<>();

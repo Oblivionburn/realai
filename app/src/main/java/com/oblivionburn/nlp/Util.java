@@ -1206,17 +1206,30 @@ class Util
 
                     if (!match)
                     {
-                        int num = Integer.parseInt(topic[1]);
-                        if (num - 1 > 0)
+                        try
                         {
-                            num--;
-                            topic[1] = Integer.toString(num);
-                            output.set(i, topic[0] + "~" + topic[1]);
+                            if (topic.length > 1)
+                            {
+                                if (topic[1] != null)
+                                {
+                                    int num = Integer.parseInt(topic[1]);
+                                    if (num - 1 > 0)
+                                    {
+                                        num--;
+                                        topic[1] = Integer.toString(num);
+                                        output.set(i, topic[0] + "~" + topic[1]);
+                                    }
+                                    else
+                                    {
+                                        output.remove(i);
+                                        i--;
+                                    }
+                                }
+                            }
                         }
-                        else
+                        catch (NumberFormatException e)
                         {
-                            output.remove(i);
-                            i--;
+                            //ignore since it's probably the user entering a #
                         }
                     }
                 }

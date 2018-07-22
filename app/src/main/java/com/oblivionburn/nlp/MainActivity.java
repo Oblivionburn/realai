@@ -321,11 +321,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
             {
-                if (actionId == EditorInfo.IME_ACTION_DONE)
+                if (actionId == EditorInfo.IME_ACTION_DONE ||
+                    actionId == EditorInfo.IME_ACTION_NEXT)
                 {
                     onSend(v);
+                    return true;
                 }
-                return true;
+                return false;
             }
         });
 
@@ -447,10 +449,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
     {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+        if (grantResults.length > 0)
         {
-            bl_Ready = true;
-            DisplayTips();
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                bl_Ready = true;
+                DisplayTips();
+            }
+            else
+            {
+                onDestroy();
+            }
         }
         else
         {
@@ -658,6 +667,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     });
 
                     Util.ClearLeftovers();
+                }
+                else
+                {
+                    bl_Ready = true;
                 }
             }
         }
