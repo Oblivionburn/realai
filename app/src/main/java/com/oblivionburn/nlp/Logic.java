@@ -25,20 +25,83 @@ class Logic
     static String[] prepInput(String input)
     {
         String[] wordArray = prepInput_CreateWordArray(input);
+        List<String> inputs = handle_MultiPhrase(wordArray);
 
-        if (wordArray != null)
+        if (inputs != null)
         {
             if (UserInput || Advanced)
             {
-                Util.UpdateInputList(input);
-                prepInput_UpdateExistingFrequencies(wordArray);
-                prepInput_AddNewWords(wordArray);
-                prepInput_UpdatePreWords(wordArray);
-                prepInput_UpdateProWords(wordArray);
+                for (String new_input : inputs)
+                {
+                    wordArray = prepInput_CreateWordArray(new_input);
+                    Util.UpdateInputList(new_input);
+                    prepInput_UpdateExistingFrequencies(wordArray);
+                    prepInput_AddNewWords(wordArray);
+                    prepInput_UpdatePreWords(wordArray);
+                    prepInput_UpdateProWords(wordArray);
+                }
+
+                if (NewInput)
+                {
+                    Util.UpdateOutputList_MultiPhrase(inputs);
+                }
+            }
+            else if (inputs.size() > 0)
+            {
+                String new_input = inputs.get(inputs.size() - 1);
+                wordArray = prepInput_CreateWordArray(new_input);
+            }
+        }
+        else if (wordArray != null &&
+                (UserInput || Advanced))
+        {
+            Util.UpdateInputList(input);
+            prepInput_UpdateExistingFrequencies(wordArray);
+            prepInput_AddNewWords(wordArray);
+            prepInput_UpdatePreWords(wordArray);
+            prepInput_UpdateProWords(wordArray);
+
+            if (NewInput)
+            {
+                Util.UpdateOutputList(input);
             }
         }
 
         return wordArray;
+    }
+
+    private static List<String> handle_MultiPhrase(String[] wordArray)
+    {
+        boolean multi_phrase = Util.IsMultiPhrase(wordArray);
+        if (multi_phrase)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            List<String> phrases = new ArrayList<>();
+            for (String word : wordArray)
+            {
+                if (word.equals(" .") || word.equals(" !") || word.equals(" $"))
+                {
+                    sb.append(word);
+                    phrases.add(sb.toString());
+                    sb = new StringBuilder();
+                }
+                else
+                {
+                    sb.append(word).append(" ");
+                }
+            }
+
+            List<String> results = new ArrayList<>();
+            for (String phrase : phrases)
+            {
+                results.add(Util.RulesCheck(phrase));
+            }
+
+            return results;
+        }
+
+        return null;
     }
 
     private static String[] prepInput_CreateWordArray(String input)
@@ -271,22 +334,17 @@ class Logic
     static String Respond(String[] wordArray, String input)
     {
         String output;
-        String response = "";
+        StringBuilder response = new StringBuilder();
 
         if (UserInput)
         {
-            Util.GenTopics(wordArray);
-            Util.AddTopics(input);
+            topics = Util.GenTopics(wordArray, topics);
+            Util.AddTopics(input, topics);
             last_response_thinking = input;
         }
         else if (Initiation && topics.size() == 0)
         {
             topics.add(Util.Get_RandomWord());
-        }
-
-        if (NewInput)
-        {
-            Util.UpdateOutputList(input);
         }
 
         if (topics.size() > 0)
@@ -297,10 +355,10 @@ class Logic
             {
                 Random rand = new Random();
                 int int_random_choice = rand.nextInt(topics.size());
-                response = GenerateResponse(topics.get(int_random_choice));
+                response.append(GenerateResponse(topics.get(int_random_choice)));
 
                 //If nothing new could be generated with the topic, change topic
-                if (Initiation && response.equals(topics.get(int_random_choice)))
+                if (Initiation && response.toString().equals(topics.get(int_random_choice)))
                 {
                     topics.clear();
                 }
@@ -310,17 +368,17 @@ class Logic
                 //Check for existing responses to phrases using the topics
                 if (TopicBased)
                 {
-                    List<String> info = Util.Get_Related(topics);
+                    List<String> info = Util.Get_TopicRelated(topics);
                     if (info.size() > 0)
                     {
                         //If some found, pick one at random
                         Random rand = new Random();
                         int int_random_choice = rand.nextInt(info.size());
-                        response = info.get(int_random_choice);
+                        response.append(info.get(int_random_choice));
                         bl_MatchFound = true;
 
                         //If nothing could be generated with the topic, change topic
-                        if (Initiation && Util.RulesCheck(response).equals(last_response))
+                        if (Initiation && Util.RulesCheck(response.toString()).equals(Util.Get_FirstPhrase(last_response)))
                         {
                             topics.clear();
                             bl_MatchFound = false;
@@ -332,17 +390,17 @@ class Logic
                 if (!bl_MatchFound && ConditionBased)
                 {
                     String temp_input = Util.PunctuationFix_ForInput(input);
-                    List<String> outputList = Data.getOutputList_NoTopics(temp_input);
+                    List<String> outputList = Data.getOutputList_NoRelated(temp_input);
                     if (outputList.size() > 0)
                     {
                         //If some found, pick one at random
                         Random rand = new Random();
                         int int_random_choice = rand.nextInt(outputList.size());
-                        response = outputList.get(int_random_choice);
+                        response.append(outputList.get(int_random_choice));
                         bl_MatchFound = true;
 
                         //If nothing could be generated with the topic, change topic
-                        if (Initiation && Util.RulesCheck(response).equals(last_response))
+                        if (Initiation && Util.RulesCheck(response.toString()).equals(Util.Get_FirstPhrase(last_response)))
                         {
                             topics.clear();
                             bl_MatchFound = false;
@@ -357,27 +415,40 @@ class Logic
                     {
                         Random rand = new Random();
                         int int_random_choice = rand.nextInt(topics.size());
-                        response = GenerateResponse(topics.get(int_random_choice));
+                        response.append(GenerateResponse(topics.get(int_random_choice)));
                     }
                     else
                     {
-                        response = GenerateResponse(Util.Get_RandomWord());
+                        response.append(GenerateResponse(Util.Get_RandomWord()));
                     }
 
                     //If nothing new could be generated with the topic, change topic
-                    if (Initiation && Util.RulesCheck(response).equals(last_response))
+                    if (Initiation && Util.RulesCheck(response.toString()).equals(Util.Get_FirstPhrase(last_response)))
                     {
                         topics.clear();
                     }
                 }
             }
 
-            response = Util.RulesCheck(response);
-
-            if (!response.isEmpty())
+            String current_response = response.toString();
+            List<String> RelatedPhrases = Util.Get_PhraseRelated(current_response);
+            if (RelatedPhrases.size() > 0)
             {
-                output = response;
-                last_response = response;
+                for (String related : RelatedPhrases)
+                {
+                    if (!related.equals(current_response))
+                    {
+                        response.append(" ").append(related);
+                    }
+                }
+            }
+
+            String response_output = Util.RulesCheck(response.toString());
+
+            if (!response_output.isEmpty())
+            {
+                output = response_output;
+                last_response = response_output;
 
                 NewInput = true;
             }
@@ -385,6 +456,88 @@ class Logic
             {
                 output = "";
             }
+        }
+        else
+        {
+            output = "";
+        }
+
+        return output;
+    }
+
+    static String Think(String[] wordArray)
+    {
+        String output;
+        StringBuilder response = new StringBuilder();
+
+        Util.GenTopics_ForThinking(wordArray);
+
+        if (topics_thinking.size() > 0)
+        {
+            Boolean bl_MatchFound = false;
+
+            //Check for existing responses to phrases using the topics
+            List<String> info = Util.Get_TopicRelated(topics_thinking);
+            if (info.size() > 0)
+            {
+                //If some found, pick one at random
+                Random rand = new Random();
+                int int_random_choice = rand.nextInt(info.size());
+                response.append(info.get(int_random_choice));
+                bl_MatchFound = true;
+            }
+
+            //If none found, check for conditioned responses
+            if (!bl_MatchFound)
+            {
+                String temp_input = Util.PunctuationFix_ForInput(last_response_thinking);
+                List<String> outputList = Data.getOutputList_NoRelated(temp_input);
+                if (outputList.size() > 0)
+                {
+                    //If some found, pick one at random
+                    Random rand = new Random();
+                    int int_random_choice = rand.nextInt(outputList.size());
+                    response.append(outputList.get(int_random_choice));
+                    bl_MatchFound = true;
+                }
+            }
+
+            //If none found, procedurally generate a response using the topic
+            if (!bl_MatchFound)
+            {
+                Random rand = new Random();
+                int int_random_choice = rand.nextInt(topics_thinking.size());
+                response.append(GenerateResponse(topics_thinking.get(int_random_choice)));
+
+                //If nothing could be generated with the topic, change topic
+                if (Util.RulesCheck(response.toString()).equals(last_response_thinking))
+                {
+                    response.append(GenerateResponse(Util.Get_RandomWord()));
+                }
+            }
+
+            String current_response = response.toString();
+            List<String> RelatedPhrases = Util.Get_PhraseRelated(current_response);
+            if (RelatedPhrases.size() > 0)
+            {
+                for (String related : RelatedPhrases)
+                {
+                    if (!related.equals(current_response))
+                    {
+                        response.append(" ").append(related);
+                    }
+                }
+            }
+        }
+        else
+        {
+            response.append(GenerateResponse(Util.Get_RandomWord()));
+        }
+
+        String response_output = Util.RulesCheck(response.toString());
+        if (!response_output.isEmpty())
+        {
+            output = response_output;
         }
         else
         {
@@ -560,67 +713,6 @@ class Logic
             {
                 words_found = false;
             }
-        }
-
-        return response;
-    }
-
-    static String Think(String[] wordArray)
-    {
-        String response = "";
-
-        Util.GenTopics_ForThinking(wordArray);
-
-        if (topics_thinking.size() > 0)
-        {
-            Boolean bl_MatchFound = false;
-
-            //Check for existing responses to phrases using the topics
-            List<String> info = Util.Get_Related(topics_thinking);
-            if (info.size() > 0)
-            {
-                //If some found, pick one at random
-                Random rand = new Random();
-                int int_random_choice = rand.nextInt(info.size());
-                response = info.get(int_random_choice);
-                bl_MatchFound = true;
-            }
-
-            //If none found, check for conditioned responses
-            if (!bl_MatchFound)
-            {
-                String temp_input = Util.PunctuationFix_ForInput(last_response_thinking);
-                List<String> outputList = Data.getOutputList_NoTopics(temp_input);
-                if (outputList.size() > 0)
-                {
-                    //If some found, pick one at random
-                    Random rand = new Random();
-                    int int_random_choice = rand.nextInt(outputList.size());
-                    response = outputList.get(int_random_choice);
-                    bl_MatchFound = true;
-                }
-            }
-
-            //If none found, procedurally generate a response using the topic
-            if (!bl_MatchFound)
-            {
-                Random rand = new Random();
-                int int_random_choice = rand.nextInt(topics_thinking.size());
-                response = GenerateResponse(topics_thinking.get(int_random_choice));
-
-                //If nothing could be generated with the topic, change topic
-                if (Util.RulesCheck(response).equals(last_response_thinking))
-                {
-                    response = GenerateResponse(Util.Get_RandomWord());
-                }
-            }
-
-            response = Util.RulesCheck(response);
-        }
-        else
-        {
-            response = GenerateResponse(Util.Get_RandomWord());
-            response = Util.RulesCheck(response);
         }
 
         return response;

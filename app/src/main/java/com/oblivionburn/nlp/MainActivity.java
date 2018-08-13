@@ -7,18 +7,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
@@ -30,7 +25,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -43,9 +37,11 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity implements OnItemSelectedListener
 {
-    public static final File Brain_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/" );
-    public static final File History_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/History/" );
-    public static final File Thought_dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Brain/Thoughts/" );
+    private Context context;
+
+    private File Brain_dir;
+    private File History_dir;
+    private File Thought_dir;
 
     static int int_Time = 10000;
     static boolean bl_DelayForever = false;
@@ -81,7 +77,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private static Handler handle_thinking;
     private static Handler handle_attention;
-    private boolean KeyboardOpen;
     private View rootView;
 
     @Override
@@ -94,17 +89,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         handle_thinking = new Handler();
         handle_attention = new Handler();
 
-        Output = new LiteText(getApplicationContext());
-        Input = new LiteText(getApplicationContext());
-        txt_WordFix = new LiteText(getApplicationContext());
-        sp_WordFix = new Spinner(getApplicationContext());
-        btn_WordFix = new Button(getApplicationContext());
-        btn_Enter = new Button(getApplicationContext());
-        btn_Menu = new Button(getApplicationContext());
-        btn_Encourage = new Button(getApplicationContext());
-        btn_Discourage = new Button(getApplicationContext());
-        btn_NewSession = new Button(getApplicationContext());
-        img_Face = new ImageView(getApplicationContext());
+        context = getApplicationContext();
+        Output = new LiteText(context);
+        Input = new LiteText(context);
+        txt_WordFix = new LiteText(context);
+        sp_WordFix = new Spinner(context);
+        btn_WordFix = new Button(context);
+        btn_Enter = new Button(context);
+        btn_Menu = new Button(context);
+        btn_Encourage = new Button(context);
+        btn_Discourage = new Button(context);
+        btn_NewSession = new Button(context);
+        img_Face = new ImageView(context);
 
         Input = findViewById(R.id.txt_Input);
 
@@ -124,72 +120,30 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         img_Face = findViewById(R.id.img_Face);
 
-        createBrain();
+        Brain_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/" );
+        History_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/History/" );
+        Thought_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/Thoughts/" );
+
+        createBrain(context);
         createListeners();
 
-        rootView = findViewById(android.R.id.content);
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
-        {
-            @Override
-            public void onGlobalLayout()
-            {
-                int heightDiff = rootView.getRootView().getHeight() - rootView.getHeight();
-                KeyboardOpen = heightDiff > Util.dpToPx(getApplicationContext());
-            }
-        });
-
-        if (isStoragePermissionGranted())
-        {
-            bl_Ready = true;
-            DisplayTips();
-        }
+        bl_Ready = true;
+        DisplayTips();
     }
 
-    private void createBrain()
+    private void createBrain(Context context)
     {
+        Data.initData(context);
+
         if (!Brain_dir.exists())
         {
             Brain_dir.mkdirs();
         }
 
-        File file = new File(Brain_dir, "Words.txt");
+        File file = new File(Brain_dir, "Config.ini");
         if (!file.exists())
         {
-            try
-            {
-                file.createNewFile();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        file = new File(Brain_dir, "InputList.txt");
-        if (!file.exists())
-        {
-            try
-            {
-                file.createNewFile();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        file = new File(Brain_dir, "Config.ini");
-        if (!file.exists())
-        {
-            try
-            {
-                file.createNewFile();
-                Data.initConfig();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+            Data.initConfig();
         }
         else
         {
@@ -268,14 +222,67 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             }
         }
 
+        file = new File(Brain_dir, "Words.txt");
+        if (!file.exists())
+        {
+            try
+            {
+                file.createNewFile();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        file = new File(Brain_dir, "InputList.txt");
+        if (!file.exists())
+        {
+            try
+            {
+                file.createNewFile();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
+        String currentDate = f.format(new Date());
+
+        file = new File(History_dir, currentDate + ".txt");
         if (!History_dir.exists())
         {
             History_dir.mkdirs();
+            if (!file.exists())
+            {
+                try
+                {
+                    file.createNewFile();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
 
+        file = new File(Thought_dir, currentDate + ".txt");
         if (!Thought_dir.exists())
         {
             Thought_dir.mkdirs();
+            if (!file.exists())
+            {
+                try
+                {
+                    file.createNewFile();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -424,49 +431,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         });
     }
 
-    public  boolean isStoragePermissionGranted()
-    {
-        if (Build.VERSION.SDK_INT >= 23)
-        {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-            {
-                return true;
-            }
-            else
-            {
-                stopTimer();
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                return false;
-            }
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0)
-        {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            {
-                bl_Ready = true;
-                DisplayTips();
-            }
-            else
-            {
-                onDestroy();
-            }
-        }
-        else
-        {
-            onDestroy();
-        }
-    }
-
     @Override
     public void onDestroy()
     {
@@ -547,7 +511,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             String[] wordArray = Logic.prepInput(Logic.last_response_thinking);
 
             Logic.last_response_thinking = Logic.Think(wordArray);
-            Logic.last_response_thinking = Util.HistoryRules(Logic.last_response_thinking);
+            Logic.last_response_thinking = Util.RulesCheck(Logic.last_response_thinking);
 
             if (!Logic.last_response_thinking.equals(""))
             {
@@ -555,7 +519,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 Data.saveThoughts(thoughts);
             }
 
-            Util.ClearLeftovers();
+            Util.ClearLeftovers(context);
 
             if (bl_Thought)
             {
@@ -590,7 +554,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         {
             if (Logic.NewInput)
             {
-                Util.CleanMemory();
+                Util.CleanMemory(context);
             }
 
             Logic.NewInput = false;
@@ -629,7 +593,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
         else if (bl_Ready)
         {
-            bl_Ready = false;
             Respond.run();
         }
     }
@@ -650,7 +613,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 if (wordArray != null)
                 {
                     List<String> history = Data.getHistory();
-                    input = Util.HistoryRules(input);
+                    input = Util.RulesCheck(input);
                     history.add("User: " + input);
                     Data.saveHistory(history);
 
@@ -663,14 +626,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                         {
                             ScrollHistory(output);
                             img_Face.setImageResource(R.drawable.face_neutral);
+                            Input.setText("");
                         }
                     });
 
-                    Util.ClearLeftovers();
-                }
-                else
-                {
-                    bl_Ready = true;
+                    Util.ClearLeftovers(context);
                 }
             }
         }
@@ -712,12 +672,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         if (bl_Bored)
         {
             bl_Bored = false;
-        }
-
-        if (!bl_Ready)
-        {
-            Input.setText("");
-            bl_Ready = true;
         }
     }
 
@@ -1184,7 +1138,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             List<String> input = Data.getInputList();
             for (int i = 0; i < input.size(); i++)
             {
-                List<String> output = Data.getOutputList(input.get(i));
+                List<String> output = Data.getAllOutputs(input.get(i));
                 for (int j = 0; j < output.size(); j++)
                 {
                     if (output.get(j).contains(oldWord))
@@ -1411,8 +1365,11 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 "never understand you trying to reference it (or yourself) directly, as it can never have a concept of " +
                 "anything external being something different from it without spatial recognition gained from sight/touch/sound. \n\n";
 
-        tips += "10. In general... keep it simple. The simpler you speak to it, the better it learns. " +
-                "For more information and details of how the AI works, check the Forum: http://realai.freeforums.net/thread/18/expect-ai?page=1&scrollTo=50 \n\n";
+        tips += "10. In general... keep it simple. The simpler you speak to it, the better it learns. \n\n";
+
+        tips += "For help, check Discord: https://discord.gg/VCQwCk6 \n\n";
+
+        tips += "For more information and details of how the AI works, check the Forum: http://realai.freeforums.net/#category-3 \n\n";
 
         Output.setMovementMethod(LinkMovementMethod.getInstance());
         Output.setText(tips);
@@ -1494,7 +1451,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void Encourage(View view)
     {
-        Util.CleanMemory();
+        Util.CleanMemory(context);
         Util.Encourage();
 
         List<String> history = Data.getHistory();
@@ -1507,7 +1464,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void Discourage(View view)
     {
-        Util.CleanMemory();
+        Util.CleanMemory(context);
         Util.Discourage();
 
         List<String> history = Data.getHistory();
@@ -1520,7 +1477,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void NewSession(View view)
     {
-        Util.CleanMemory();
+        Util.CleanMemory(context);
 
         List<String> history = Data.getHistory();
         history.add("---New Session---");
@@ -1532,13 +1489,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void HideKeyboard()
     {
-        if (KeyboardOpen)
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null)
         {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null)
-            {
-                imm.hideSoftInputFromWindow(Input.getWindowToken(), 0);
-            }
+            imm.hideSoftInputFromWindow(Input.getWindowToken(), 0);
         }
     }
 

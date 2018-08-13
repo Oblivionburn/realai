@@ -53,6 +53,7 @@
     <Button
         android:id="@+id/btn_Enter"
         android:text="@string/enter_button"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/btn_Discourage"
@@ -65,6 +66,7 @@
     <Button
         android:id="@+id/btn_Discourage"
         android:text="@string/discourage"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/btn_NewSession"
@@ -90,6 +92,7 @@
     <Button
         android:id="@+id/btn_Encourage"
         android:text="@string/encourage"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/btn_NewSession"
@@ -107,6 +110,7 @@
     <Button
         android:id="@+id/btn_NewSession"
         android:text="@string/new_session"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/btn_Menu"
@@ -124,6 +128,7 @@
     <Button
         android:id="@+id/btn_Menu"
         android:text="@string/menu_button"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/btn_Enter"

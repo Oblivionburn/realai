@@ -1,11 +1,16 @@
 package com.oblivionburn.nlp;
 
+import android.content.Context;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,78 +19,102 @@ import java.util.Locale;
 
 class Data
 {
+    private static String dir;
+
+    static void initData(Context context)
+    {
+        dir = context.getFilesDir().getAbsolutePath();
+    }
+
     //Config Data
     static void initConfig()
     {
-        BufferedWriter writer;
+        StringBuilder fileContents = new StringBuilder();
+        fileContents.append("Delay:10 seconds").append("\n");
+        fileContents.append("Advanced:false").append("\n");
+        fileContents.append("Topic Response Method:true").append("\n");
+        fileContents.append("Condition Response Method:true").append("\n");
+        fileContents.append("Procedural Response Method:true").append("\n");
+
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
+
         try
         {
-            File file = new File(MainActivity.Brain_dir, "Config.ini");
-            writer = new BufferedWriter(new FileWriter(file));
-            writer.write("Delay:10 seconds");
-            writer.newLine();
-            writer.write("Advanced:False");
-            writer.close();
+            if (!file.exists())
+            {
+                file.createNewFile();
+            }
+
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(fileContents.toString().getBytes());
+            outputStream.close();
         }
-        catch(IOException ex)
+        catch (Exception e)
         {
-            ex.printStackTrace();
+            e.printStackTrace();
         }
     }
 
     static void setConfig(String delay, String advanced, String topic, String condition, String procedural)
     {
-        BufferedWriter writer;
+        StringBuilder fileContents = new StringBuilder();
+        fileContents.append("Delay:").append(delay).append("\n");
+        fileContents.append("Advanced:").append(advanced).append("\n");
+        fileContents.append("Topic Response Method:").append(topic).append("\n");
+        fileContents.append("Condition Response Method:").append(condition).append("\n");
+        fileContents.append("Procedural Response Method:").append(procedural).append("\n");
+
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
+
         try
         {
-            File file = new File(MainActivity.Brain_dir, "Config.ini");
             if (!file.exists())
             {
                 file.createNewFile();
             }
-            writer = new BufferedWriter(new FileWriter(file));
-            writer.write("Delay:" + delay);
-            writer.newLine();
-            writer.write("Advanced:" + advanced);
-            writer.newLine();
-            writer.write("Topic Response Method:" + topic);
-            writer.newLine();
-            writer.write("Condition Response Method:" + condition);
-            writer.newLine();
-            writer.write("Procedural Response Method:" + procedural);
-            writer.close();
+
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(fileContents.toString().getBytes());
+            outputStream.close();
         }
-        catch(IOException ex)
+        catch (Exception e)
         {
-            ex.printStackTrace();
+            e.printStackTrace();
         }
     }
 
     static String getDelay()
     {
-        String Config[];
         String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, "Config.ini");
-
-        try
+        if (file.exists())
         {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-
-            String line;
-            while ((line = br.readLine()) != null)
+            try
             {
-                if (line.contains("Delay:"))
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
                 {
-                    Config = line.split(":");
-                    result = Config[1];
+                    if (line.contains("Delay:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
                 }
+                dataStream.close();
             }
-            br.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;
@@ -93,29 +122,34 @@ class Data
 
     static String getAdvanced()
     {
-        String Config[];
         String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, "Config.ini");
-
-        try
+        if (file.exists())
         {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-
-            String line;
-            while ((line = br.readLine()) != null)
+            try
             {
-                if (line.contains("Advanced:"))
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
                 {
-                    Config = line.split(":");
-                    result = Config[1];
+                    if (line.contains("Advanced:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
                 }
+                dataStream.close();
             }
-            br.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;
@@ -123,29 +157,34 @@ class Data
 
     static String getTopicBased()
     {
-        String Config[];
         String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, "Config.ini");
-
-        try
+        if (file.exists())
         {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-
-            String line;
-            while ((line = br.readLine()) != null)
+            try
             {
-                if (line.contains("Topic Response Method:"))
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
                 {
-                    Config = line.split(":");
-                    result = Config[1];
+                    if (line.contains("Topic Response Method:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
                 }
+                dataStream.close();
             }
-            br.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;
@@ -153,29 +192,34 @@ class Data
 
     static String getConditionBased()
     {
-        String Config[];
         String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, "Config.ini");
-
-        try
+        if (file.exists())
         {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-
-            String line;
-            while ((line = br.readLine()) != null)
+            try
             {
-                if (line.contains("Condition Response Method:"))
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
                 {
-                    Config = line.split(":");
-                    result = Config[1];
+                    if (line.contains("Condition Response Method:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
                 }
+                dataStream.close();
             }
-            br.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;
@@ -183,29 +227,34 @@ class Data
 
     static String getProceduralBased()
     {
-        String Config[];
         String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, "Config.ini");
-
-        try
+        if (file.exists())
         {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-
-            String line;
-            while ((line = br.readLine()) != null)
+            try
             {
-                if (line.contains("Procedural Response Method:"))
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
                 {
-                    Config = line.split(":");
-                    result = Config[1];
+                    if (line.contains("Procedural Response Method:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
                 }
+                dataStream.close();
             }
-            br.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;
@@ -214,10 +263,12 @@ class Data
     //Words Data
     static void saveWords(List<WordData> data)
     {
+        String fileName = dir + "/Brain/Words.txt";
+        File file = new File(fileName);
+
         BufferedWriter writer;
         try
         {
-            File file = new File(MainActivity.Brain_dir, "Words.txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -241,13 +292,12 @@ class Data
 
     static List<WordData> getWords()
     {
+        List<WordData> data = new ArrayList<>();
         List<String> words = new ArrayList<>();
         List<Integer> frequencies = new ArrayList<>();
-        List<WordData> data = new ArrayList<>();
 
-        String WordSet[];
-
-        File file = new File(MainActivity.Brain_dir, "Words.txt");
+        String fileName = dir + "/Brain/Words.txt";
+        File file = new File(fileName);
 
         try
         {
@@ -258,7 +308,7 @@ class Data
             {
                 if (line.contains("~"))
                 {
-                    WordSet = line.split("~");
+                    String WordSet[] = line.split("~");
                     if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                     {
                         int frequency = Integer.parseInt(WordSet[1]);
@@ -287,10 +337,12 @@ class Data
     //PreWords Data
     static void savePreWords(List<WordData> data, String word)
     {
+        String fileName = dir + "/Brain/Pre-" + word + ".txt";
+        File file = new File(fileName);
+
         BufferedWriter writer;
         try
         {
-            File file = new File(MainActivity.Brain_dir, "Pre-" + word + ".txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -318,8 +370,8 @@ class Data
         List<Integer> frequencies = new ArrayList<>();
         List<WordData> data = new ArrayList<>();
 
-        String WordSet[];
-        File file = new File(MainActivity.Brain_dir, "Pre-" + word + ".txt");
+        String fileName = dir + "/Brain/Pre-" + word + ".txt";
+        File file = new File(fileName);
 
         if (file.isFile())
         {
@@ -332,7 +384,7 @@ class Data
                 {
                     if (line.contains("~"))
                     {
-                        WordSet = line.split("~");
+                        String WordSet[] = line.split("~");
                         if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                         {
                             int frequency = Integer.parseInt(WordSet[1]);
@@ -364,10 +416,12 @@ class Data
     //ProWords Data
     static void saveProWords(List<WordData> data, String word)
     {
+        String fileName = dir + "/Brain/Pro-" + word + ".txt";
+        File file = new File(fileName);
+
         BufferedWriter writer;
         try
         {
-            File file = new File(MainActivity.Brain_dir, "Pro-" + word + ".txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -395,8 +449,8 @@ class Data
         List<Integer> frequencies = new ArrayList<>();
         List<WordData> data = new ArrayList<>();
 
-        String WordSet[];
-        File file = new File(MainActivity.Brain_dir, "Pro-" + word + ".txt");
+        String fileName = dir + "/Brain/Pro-" + word + ".txt";
+        File file = new File(fileName);
 
         if (file.isFile())
         {
@@ -409,7 +463,7 @@ class Data
                 {
                     if (line.contains("~"))
                     {
-                        WordSet = line.split("~");
+                        String WordSet[] = line.split("~");
                         if (!WordSet[1].equals("") && Util.tryParseInt(WordSet[1]))
                         {
                             int frequency = Integer.parseInt(WordSet[1]);
@@ -439,10 +493,12 @@ class Data
     //Input Data
     static void saveInputList(List<String> input)
     {
+        String fileName = dir + "/Brain/InputList.txt";
+        File file = new File(fileName);
+
         BufferedWriter writer;
         try
         {
-            File file = new File(MainActivity.Brain_dir, "InputList.txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -465,10 +521,11 @@ class Data
     static List<String> getInputList()
     {
         List<String> input = new ArrayList<>();
+        String fileName = dir + "/Brain/InputList.txt";
+        File file = new File(fileName);
 
         try
         {
-            File file = new File(MainActivity.Brain_dir, "InputList.txt");
             BufferedReader br = new BufferedReader(new FileReader(file));
 
             String line;
@@ -492,10 +549,12 @@ class Data
     //Output Data
     static void saveOutput(List<String> output, String input)
     {
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
+
         BufferedWriter writer;
         try
         {
-            File file = new File(MainActivity.Brain_dir, input + ".txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -515,13 +574,13 @@ class Data
         }
     }
 
-    static List<String> getOutputList(String input)
+    static List<String> getAllOutputs(String input)
     {
         List<String> output = new ArrayList<>();
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, input + ".txt");
-
-        if (file.isFile())
+        if (file.exists())
         {
             try
             {
@@ -542,33 +601,17 @@ class Data
                 e.printStackTrace();
             }
         }
-        else
-        {
-            BufferedWriter writer;
-            try
-            {
-                writer = new BufferedWriter(new FileWriter(file));
-                String WordsLine = "";
-                writer.write(WordsLine);
-                writer.newLine();
-                writer.close();
-            }
-            catch(IOException ex)
-            {
-                ex.printStackTrace();
-            }
-        }
 
         return output;
     }
 
-    static List<String> getOutputList_NoTopics(String input)
+    static List<String> getOutputList_NoRelated(String input)
     {
         List<String> output = new ArrayList<>();
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, input + ".txt");
-
-        if (file.isFile())
+        if (file.exists())
         {
             try
             {
@@ -577,9 +620,18 @@ class Data
                 String line;
                 while ((line = br.readLine()) != null)
                 {
-                    if (!line.equals("") && !line.contains("#"))
+                    if (!line.equals("") &&
+                        !line.contains("#"))
                     {
-                        output.add(line);
+                        if (line.contains("^"))
+                        {
+                            int index = line.indexOf("^");
+                            output.add(line.substring(0, index));
+                        }
+                        else
+                        {
+                            output.add(line);
+                        }
                     }
                 }
                 br.close();
@@ -596,10 +648,10 @@ class Data
     static List<String> getOutputList_OnlyTopics(String input)
     {
         List<String> output = new ArrayList<>();
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, input + ".txt");
-
-        if (file.isFile())
+        if (file.exists())
         {
             try
             {
@@ -624,13 +676,52 @@ class Data
         return output;
     }
 
+    static List<String> getRelatedOutputs(String input, String phrase)
+    {
+        List<String> output = new ArrayList<>();
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
+
+        if (file.exists())
+        {
+            try
+            {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+
+                String line;
+                while ((line = br.readLine()) != null)
+                {
+                    if (!line.equals(""))
+                    {
+                        if (line.contains(phrase) &&
+                                line.contains("^"))
+                        {
+                            String[] outputs = line.split("\\^");
+                            for (String new_output : outputs)
+                            {
+                                output.add(new_output);
+                            }
+                        }
+                    }
+                }
+                br.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return output;
+    }
+
     static List<String> getTopics(String input)
     {
         List<String> result = new ArrayList<>();
+        String fileName = dir + "/Brain/" + input + ".txt";
+        File file = new File(fileName);
 
-        File file = new File(MainActivity.Brain_dir, input + ".txt");
-
-        if (file.isFile())
+        if (file.exists())
         {
             try
             {
@@ -666,9 +757,12 @@ class Data
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
 
+        String history_dir = dir + "/Brain/History/";
+        String fileName = history_dir + currentDate + ".txt";
+        File file = new File(fileName);
+
         try
         {
-            File file = new File(MainActivity.History_dir, currentDate + ".txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -694,7 +788,10 @@ class Data
 
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
-        File file = new File(MainActivity.History_dir, currentDate + ".txt");
+
+        String history_dir = dir + "/Brain/History/";
+        String fileName = history_dir + currentDate + ".txt";
+        File file = new File(fileName);
 
         if (file.isFile())
         {
@@ -717,22 +814,6 @@ class Data
                 e.printStackTrace();
             }
         }
-        else
-        {
-            BufferedWriter writer;
-            try
-            {
-                writer = new BufferedWriter(new FileWriter(file));
-                String WordsLine = "";
-                writer.write(WordsLine);
-                writer.newLine();
-                writer.close();
-            }
-            catch(IOException ex)
-            {
-                ex.printStackTrace();
-            }
-        }
 
         return history;
     }
@@ -744,9 +825,12 @@ class Data
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
 
+        String thoughts_dir = dir + "/Brain/Thoughts/";
+        String fileName = thoughts_dir + currentDate + ".txt";
+        File file = new File(fileName);
+
         try
         {
-            File file = new File(MainActivity.Thought_dir, currentDate + ".txt");
             if (!file.exists())
             {
                 file.createNewFile();
@@ -772,7 +856,10 @@ class Data
 
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
-        File file = new File(MainActivity.Thought_dir, currentDate + ".txt");
+
+        String thoughts_dir = dir + "/Brain/Thoughts/";
+        String fileName = thoughts_dir + currentDate + ".txt";
+        File file = new File(fileName);
 
         if (file.isFile())
         {
@@ -793,22 +880,6 @@ class Data
             catch (IOException e)
             {
                 e.printStackTrace();
-            }
-        }
-        else
-        {
-            BufferedWriter writer;
-            try
-            {
-                writer = new BufferedWriter(new FileWriter(file));
-                String WordsLine = "";
-                writer.write(WordsLine);
-                writer.newLine();
-                writer.close();
-            }
-            catch(IOException ex)
-            {
-                ex.printStackTrace();
             }
         }
 
