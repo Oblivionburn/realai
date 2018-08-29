@@ -28,18 +28,24 @@ public class LiteText extends AppCompatEditText
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
-        switch (event.getAction())
+        if (event != null)
         {
-            case MotionEvent.ACTION_DOWN:
-                this.setInsertionDisabled();
-                break;
-            case MotionEvent.ACTION_UP:
-                this.performClick();
-                break;
-            default:
-                break;
+            switch (event.getAction())
+            {
+                case MotionEvent.ACTION_DOWN:
+                    this.setInsertionDisabled();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    this.performClick();
+                    break;
+                default:
+                    break;
+            }
+
+            return super.onTouchEvent(event);
         }
-        return super.onTouchEvent(event);
+
+        return false;
     }
 
     @Override

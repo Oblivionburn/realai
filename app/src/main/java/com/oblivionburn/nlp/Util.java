@@ -1008,8 +1008,12 @@ class Util
                 while (str_last_letter.equals(" "))
                 {
                     response.delete(response.length() - 1, response.length());
-                    last_letter = response.charAt(response.length() - 1);
-                    str_last_letter = Character.toString(last_letter);
+
+                    if (response.length() > 0)
+                    {
+                        last_letter = response.charAt(response.length() - 1);
+                        str_last_letter = Character.toString(last_letter);
+                    }
                 }
 
                 //Set an ending punctuation if one does not exist

@@ -76,7 +76,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Thinking;
 
     private static Handler handle_thinking;
-    private static Handler handle_attention;
+    private static Handler handle_timer;
+    private static Handler handle_responding;
+
     private View rootView;
 
     @Override
@@ -87,7 +89,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         setContentView(R.layout.activity_main);
 
         handle_thinking = new Handler();
-        handle_attention = new Handler();
+        handle_timer = new Handler();
+        handle_responding = new Handler();
 
         context = getApplicationContext();
         Output = new LiteText(context);
@@ -484,19 +487,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 }
             }
 
-            handle_attention.postDelayed(Timer, int_Time);
+            handle_timer.postDelayed(Timer, int_Time);
         }
     };
 
     private void startTimer()
     {
         int_Delay = 0;
-        Timer.run();
+        handle_timer.post(Timer);
     }
 
     private void stopTimer()
     {
-        handle_attention.removeCallbacks(Timer);
+        handle_timer.removeCallbacks(Timer);
+        handle_responding.removeCallbacks(Respond);
+        handle_thinking.removeCallbacks(Thought);
     }
 
     //Thinking
@@ -523,14 +528,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
             if (bl_Thought)
             {
-                Output.post(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        ScrollThoughts();
-                    }
-                });
+                Output.post(ScrollThoughts);
             }
 
             handle_thinking.postDelayed(Thought, 2000);
@@ -539,7 +537,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void startThinking()
     {
-        Thought.run();
+        handle_thinking.post(Thought);
     }
 
     private void stopThinking()
@@ -564,15 +562,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             String[] wordArray = new String[0];
             final String output = Logic.Respond(wordArray, "");
 
-            Output.post(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    ScrollHistory(output);
-                    img_Face.setImageResource(R.drawable.face_neutral);
-                }
-            });
+            Output.post(ScrollHistory);
         }
     }
 
@@ -593,7 +583,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
         else if (bl_Ready)
         {
-            Respond.run();
+            handle_responding.post(Respond);
         }
     }
 
@@ -615,20 +605,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     List<String> history = Data.getHistory();
                     input = Util.RulesCheck(input);
                     history.add("User: " + input);
-                    Data.saveHistory(history);
 
                     final String output = Logic.Respond(wordArray, input);
 
-                    Output.post(new Runnable()
+                    if (output != null)
                     {
-                        @Override
-                        public void run()
+                        if (!output.equals(""))
                         {
-                            ScrollHistory(output);
-                            img_Face.setImageResource(R.drawable.face_neutral);
-                            Input.setText("");
+                            history.add("AI: " + output);
+                            Data.saveHistory(history);
                         }
-                    });
+                    }
+
+                    Data.saveHistory(history);
+
+                    Output.post(ScrollHistory);
+                    Input.setText("");
 
                     Util.ClearLeftovers(context);
                 }
@@ -636,68 +628,48 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         }
     };
 
-    private void ScrollHistory(String output)
+    private final Runnable ScrollHistory = new Runnable()
     {
-        List<String> history = Data.getHistory();
-
-        if (output != null)
+        @Override
+        public void run()
         {
-            if (!output.equals(""))
-            {
-                history.add("AI: " + output);
-                Data.saveHistory(history);
-            }
-        }
+            Output.setText("");
+            Output.setMovementMethod(new ScrollingMovementMethod());
 
-        Output.setText("");
-        Output.setMovementMethod(new ScrollingMovementMethod());
-
-        if (history.size() > 40)
-        {
-            for (int i = history.size() - 40; i < history.size(); i++)
-            {
-                Output.append(history.get(i) + "\n");
-            }
-        }
-        else
-        {
+            List<String> history = Data.getHistory();
             for (int i = 0; i < history.size(); i++)
             {
-                Output.append(history.get(i) + "\n");
+                Output.append(history.get(i));
             }
-        }
 
-        Output.setSelection(Output.getText().length());
+            Output.setSelection(Output.getText().length());
 
-        if (bl_Bored)
-        {
-            bl_Bored = false;
-        }
-    }
+            img_Face.setImageResource(R.drawable.face_neutral);
 
-    private void ScrollThoughts()
-    {
-        Output.setText("");
-        Output.setMovementMethod(new ScrollingMovementMethod());
-
-        List<String> thoughts = Data.getThoughts();
-        if (thoughts.size() > 40)
-        {
-            for (int i = thoughts.size() - 40; i < thoughts.size(); i++)
+            if (bl_Bored)
             {
-                Output.append(thoughts.get(i) + "\n");
+                bl_Bored = false;
             }
         }
-        else
+    };
+
+    private final Runnable ScrollThoughts = new Runnable()
+    {
+        @Override
+        public void run()
         {
+            Output.setText("");
+            Output.setMovementMethod(new ScrollingMovementMethod());
+
+            List<String> thoughts = Data.getThoughts();
             for (int i = 0; i < thoughts.size(); i++)
             {
-                Output.append(thoughts.get(i) + "\n");
+                Output.append(thoughts.get(i));
             }
-        }
 
-        Output.setSelection(Output.getText().length());
-    }
+            Output.setSelection(Output.getText().length());
+        }
+    };
 
     //MessageBox
     private void PopUp()
@@ -1403,7 +1375,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setVisibility(View.VISIBLE);
         Enabled_AdvancedStuff();
 
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         ShowKeyboard();
 
@@ -1422,7 +1394,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setVisibility(View.VISIBLE);
         Enabled_AdvancedStuff();
 
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         ShowKeyboard();
 
@@ -1439,7 +1411,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Enter.setVisibility(View.VISIBLE);
         Enabled_AdvancedStuff();
 
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         ShowKeyboard();
 
@@ -1457,7 +1429,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         List<String> history = Data.getHistory();
         history.add("---New Session---");
         Data.saveHistory(history);
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         Logic.NewInput = false;
     }
@@ -1470,7 +1442,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         List<String> history = Data.getHistory();
         history.add("---New Session---");
         Data.saveHistory(history);
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         Logic.NewInput = false;
     }
@@ -1482,7 +1454,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         List<String> history = Data.getHistory();
         history.add("---New Session---");
         Data.saveHistory(history);
-        ScrollHistory(null);
+        Output.post(ScrollHistory);
 
         Logic.NewInput = false;
     }

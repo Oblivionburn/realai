@@ -785,6 +785,7 @@ class Data
     static List<String> getHistory()
     {
         List<String> history = new ArrayList<>();
+        List<String> output = new ArrayList<>();
 
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
@@ -807,6 +808,22 @@ class Data
                         history.add(line);
                     }
                 }
+
+                if (history.size() > 40)
+                {
+                    for (int i = history.size() - 40; i < history.size(); i++)
+                    {
+                        output.add(history.get(i) + "\n");
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < history.size(); i++)
+                    {
+                        output.add(history.get(i) + "\n");
+                    }
+                }
+
                 br.close();
             }
             catch (IOException e)
@@ -815,7 +832,7 @@ class Data
             }
         }
 
-        return history;
+        return output;
     }
 
     //Thought Data
@@ -853,6 +870,7 @@ class Data
     static List<String> getThoughts()
     {
         List<String> thoughts = new ArrayList<>();
+        List<String> output = new ArrayList<>();
 
         DateFormat f = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         String currentDate = f.format(new Date());
@@ -875,6 +893,22 @@ class Data
                         thoughts.add(line);
                     }
                 }
+
+                if (thoughts.size() > 40)
+                {
+                    for (int i = thoughts.size() - 40; i < thoughts.size(); i++)
+                    {
+                        output.add(thoughts.get(i) + "\n");
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < thoughts.size(); i++)
+                    {
+                        output.add(thoughts.get(i) + "\n");
+                    }
+                }
+
                 br.close();
             }
             catch (IOException e)
@@ -883,7 +917,7 @@ class Data
             }
         }
 
-        return thoughts;
+        return output;
     }
 
 }
