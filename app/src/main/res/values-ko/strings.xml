@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">Real AI</string>
     <string name="enter_button">입력</string>
     <string name="back_button">뒤로가기</string>
@@ -12,8 +12,8 @@
     <string name="btn_accept">승인</string>
     <string name="setdelay">지연시간 설정</string>
     <string name="tips">팁</string>
-    <string name="encourage">격려</string>
-    <string name="discourage">좌절</string>
+    <string name="encourage">긍정</string>
+    <string name="discourage">부정</string>
     <string name="advanced_on">고급모드 : 켜짐</string>
     <string name="advanced_off">고급모드 : 꺼짐</string>
     <string name="new_session">새 세션</string>
