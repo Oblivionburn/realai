@@ -51,11 +51,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private LiteText txt_WordFix = null;
     private Spinner sp_WordFix = null;
     private Button btn_WordFix = null;
-    private Button btn_Enter = null;
     private Button btn_Menu = null;
     private Button btn_Encourage = null;
     private Button btn_Discourage = null;
-    private Button btn_NewSession = null;
     private ImageView img_Face = null;
 
     private int int_Delay = 0;
@@ -64,7 +62,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private int wordfix_selection = 0;
 
     private boolean bl_Typing = false;
-    private boolean bl_Ready = false;
     private boolean bl_Thought = false;
     private boolean bl_WordFix = false;
     private boolean bl_Delay = false;
@@ -98,11 +95,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         txt_WordFix = new LiteText(context);
         sp_WordFix = new Spinner(context);
         btn_WordFix = new Button(context);
-        btn_Enter = new Button(context);
         btn_Menu = new Button(context);
         btn_Encourage = new Button(context);
         btn_Discourage = new Button(context);
-        btn_NewSession = new Button(context);
         img_Face = new ImageView(context);
 
         Input = findViewById(R.id.txt_Input);
@@ -110,11 +105,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         Output = findViewById(R.id.txt_Output);
         Output.setMaxLines(Integer.MAX_VALUE);
 
-        btn_Enter = findViewById(R.id.btn_Enter);
         btn_Menu = findViewById(R.id.btn_Menu);
         btn_Encourage = findViewById(R.id.btn_Encourage);
         btn_Discourage = findViewById(R.id.btn_Discourage);
-        btn_NewSession = findViewById(R.id.btn_NewSession);
         btn_WordFix = findViewById(R.id.btn_WordFix);
 
         sp_WordFix = findViewById(R.id.sp_WordFix);
@@ -130,7 +123,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         createBrain(context);
         createListeners();
 
-        bl_Ready = true;
         DisplayTips();
     }
 
@@ -518,13 +510,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             Logic.last_response_thinking = Logic.Think(wordArray);
             Logic.last_response_thinking = Util.RulesCheck(Logic.last_response_thinking);
 
-            if (!Logic.last_response_thinking.equals(""))
+            if (Logic.last_response_thinking != null)
             {
-                thoughts.add("NLP: " + Logic.last_response_thinking);
-                Data.saveThoughts(thoughts);
-            }
+                if (!Logic.last_response_thinking.equals(""))
+                {
+                    thoughts.add("NLP: " + Logic.last_response_thinking);
 
-            Util.ClearLeftovers(context);
+                    Data.saveThoughts(thoughts);
+                    Util.ClearLeftovers(context);
+                }
+            }
 
             if (bl_Thought)
             {
@@ -550,41 +545,33 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         if (!bl_Typing)
         {
-            if (Logic.NewInput)
-            {
-                Util.CleanMemory(context);
-            }
-
             Logic.NewInput = false;
             Logic.Initiation = true;
             Logic.UserInput = false;
 
             String[] wordArray = new String[0];
-            final String output = Logic.Respond(wordArray, "");
+            String output = Logic.Respond(wordArray, "");
 
-            Output.post(ScrollHistory);
+            if (output != null)
+            {
+                if (!output.equals(""))
+                {
+                    List<String> history = Data.getHistory();
+                    history.add("AI: " + output);
+
+                    Data.saveHistory(history);
+                    Util.CleanMemory(context);
+
+                    Output.post(ScrollHistory);
+                }
+            }
         }
     }
 
     //After Enter
     public void onSend(View view)
     {
-        if (bl_WordFix || bl_Delay || bl_Responses)
-        {
-            CloseWordFix();
-        }
-        else if (bl_Thought)
-        {
-            CloseThought();
-        }
-        else if (bl_Tips)
-        {
-            CloseTips();
-        }
-        else if (bl_Ready)
-        {
-            handle_responding.post(Respond);
-        }
+        handle_responding.post(Respond);
     }
 
     private final Runnable Respond = new Runnable()
@@ -606,23 +593,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     input = Util.RulesCheck(input);
                     history.add("User: " + input);
 
-                    final String output = Logic.Respond(wordArray, input);
+                    String output = Logic.Respond(wordArray, input);
 
                     if (output != null)
                     {
                         if (!output.equals(""))
                         {
                             history.add("AI: " + output);
-                            Data.saveHistory(history);
                         }
                     }
 
                     Data.saveHistory(history);
+                    Util.ClearLeftovers(context);
 
                     Output.post(ScrollHistory);
-                    Input.setText("");
 
-                    Util.ClearLeftovers(context);
+                    Input.setText("");
                 }
             }
         }
@@ -675,7 +661,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private void PopUp()
     {
         AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-        dlgAlert.setMessage("Memory has been erased.");
+        dlgAlert.setMessage("Brain has been erased.");
         dlgAlert.setTitle("System Message");
         dlgAlert.setPositiveButton("Ok", new DialogInterface.OnClickListener()
         {
@@ -854,11 +840,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Discourage.setFocusableInTouchMode(true);
         btn_Discourage.setFocusable(true);
 
-        btn_NewSession.setVisibility(View.VISIBLE);
-        btn_NewSession.setClickable(true);
-        btn_NewSession.setFocusableInTouchMode(true);
-        btn_NewSession.setFocusable(true);
-
         img_Face.setVisibility(View.VISIBLE);
         img_Face.setImageResource(R.drawable.face_neutral);
     }
@@ -874,11 +855,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         btn_Discourage.setClickable(false);
         btn_Discourage.setFocusableInTouchMode(false);
         btn_Discourage.setFocusable(false);
-
-        btn_NewSession.setVisibility(View.INVISIBLE);
-        btn_NewSession.setClickable(false);
-        btn_NewSession.setFocusableInTouchMode(false);
-        btn_NewSession.setFocusable(false);
 
         img_Face.setVisibility(View.INVISIBLE);
     }
@@ -917,7 +893,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     public void onMenu(View view)
     {
-        this.openOptionsMenu();
+        if (bl_WordFix || bl_Delay || bl_Responses)
+        {
+            CloseWordFix();
+        }
+        else if (bl_Thought)
+        {
+            CloseThought();
+        }
+        else if (bl_Tips)
+        {
+            CloseTips();
+        }
+        else
+        {
+            this.openOptionsMenu();
+        }
     }
 
     @Override
@@ -925,7 +916,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         Output.setVisibility(View.INVISIBLE);
         Input.setVisibility(View.INVISIBLE);
-        btn_Enter.setVisibility(View.INVISIBLE);
         btn_Menu.setVisibility(View.INVISIBLE);
         Disable_AdvancedStuff();
 
@@ -946,10 +936,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             {
                 Output.setVisibility(View.VISIBLE);
                 Input.setVisibility(View.VISIBLE);
+
+                btn_Menu.setText(R.string.menu_button);
                 btn_Menu.setVisibility(View.VISIBLE);
 
-                btn_Enter.setText(R.string.enter_button);
-                btn_Enter.setVisibility(View.VISIBLE);
                 Enabled_AdvancedStuff();
 
                 startTimer();
@@ -957,14 +947,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             }
             else
             {
-                btn_Enter.setText(R.string.back_button);
-                btn_Enter.setVisibility(View.VISIBLE);
+                btn_Menu.setText(R.string.back_button);
+                btn_Menu.setVisibility(View.VISIBLE);
             }
         }
         else
         {
-            btn_Enter.setText(R.string.back_button);
-            btn_Enter.setVisibility(View.VISIBLE);
+            btn_Menu.setText(R.string.ok_button);
+            btn_Menu.setVisibility(View.VISIBLE);
             Output.setVisibility(View.VISIBLE);
         }
     }
@@ -974,6 +964,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         switch (item.getItemId())
         {
+            case R.id.new_session:
+                NewSession();
+                return true;
+
             case R.id.tips:
                 DisplayTips();
                 return true;
@@ -1256,8 +1250,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void DisplayResponses()
     {
-        btn_Enter.setText(R.string.ok_button);
-        btn_Enter.setVisibility(View.VISIBLE);
+        btn_Menu.setText(R.string.ok_button);
+        btn_Menu.setVisibility(View.VISIBLE);
 
         //Set Spinner
         List<String> methods = new ArrayList<>();
@@ -1298,9 +1292,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private void DisplayTips()
     {
         Input.setVisibility(View.INVISIBLE);
-        btn_Menu.setVisibility(View.INVISIBLE);
-        btn_Enter.setText(R.string.ok_button);
-        btn_Enter.setVisibility(View.VISIBLE);
+        btn_Menu.setText(R.string.ok_button);
         Disable_AdvancedStuff();
 
         String tips = "";
@@ -1370,9 +1362,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         Output.setVisibility(View.VISIBLE);
         Input.setVisibility(View.VISIBLE);
+
+        btn_Menu.setText(R.string.menu_button);
         btn_Menu.setVisibility(View.VISIBLE);
-        btn_Enter.setText(R.string.enter_button);
-        btn_Enter.setVisibility(View.VISIBLE);
+
         Enabled_AdvancedStuff();
 
         Output.post(ScrollHistory);
@@ -1389,9 +1382,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private void CloseThought()
     {
         Input.setVisibility(View.VISIBLE);
+
+        btn_Menu.setText(R.string.menu_button);
         btn_Menu.setVisibility(View.VISIBLE);
-        btn_Enter.setText(R.string.enter_button);
-        btn_Enter.setVisibility(View.VISIBLE);
+
         Enabled_AdvancedStuff();
 
         Output.post(ScrollHistory);
@@ -1406,9 +1400,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private void CloseTips()
     {
         Input.setVisibility(View.VISIBLE);
+
+        btn_Menu.setText(R.string.menu_button);
         btn_Menu.setVisibility(View.VISIBLE);
-        btn_Enter.setText(R.string.enter_button);
-        btn_Enter.setVisibility(View.VISIBLE);
+
         Enabled_AdvancedStuff();
 
         Output.post(ScrollHistory);
@@ -1447,16 +1442,26 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         Logic.NewInput = false;
     }
 
-    public void NewSession(View view)
+    public void NewSession()
     {
-        Util.CleanMemory(context);
+        Logic.NewInput = false;
 
         List<String> history = Data.getHistory();
         history.add("---New Session---");
+
         Data.saveHistory(history);
+        Util.CleanMemory(context);
+
+        Input.setVisibility(View.VISIBLE);
+
+        btn_Menu.setText(R.string.menu_button);
+        btn_Menu.setVisibility(View.VISIBLE);
+
+        Enabled_AdvancedStuff();
+
         Output.post(ScrollHistory);
 
-        Logic.NewInput = false;
+        ShowKeyboard();
     }
 
     public void HideKeyboard()

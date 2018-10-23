@@ -3,7 +3,7 @@
     <string name="enter_button">Enter</string>
     <string name="back_button">Back</string>
     <string name="ok_button">OK</string>
-    <string name="erase_memory">Erase Memory</string>
+    <string name="erase_memory">Erase Brain</string>
     <string name="exit_app">Exit</string>
     <item name="activityRoot" type="id"/>
     <string name="thought_log">View Thinking</string>

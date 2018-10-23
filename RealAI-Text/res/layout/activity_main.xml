@@ -42,7 +42,7 @@
         android:ems="10"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_Enter"
+        android:layout_above="@+id/btn_Discourage"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
@@ -51,25 +51,12 @@
         android:inputType="text" />
 
     <Button
-        android:id="@+id/btn_Enter"
-        android:text="@string/enter_button"
-        android:textSize="12sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_Discourage"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:onClick="onSend" />
-
-    <Button
         android:id="@+id/btn_Discourage"
         android:text="@string/discourage"
         android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_NewSession"
+        android:layout_above="@+id/btn_Menu"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/btn_WordFix"
@@ -82,8 +69,7 @@
         app:srcCompat="@drawable/face_neutral"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_NewSession"
-        android:layout_below="@+id/btn_Enter"
+        android:layout_above="@+id/btn_Menu"
         android:layout_toRightOf="@+id/btn_Discourage"
         android:layout_toLeftOf="@+id/btn_Encourage"
         android:layout_toStartOf="@+id/btn_Encourage"
@@ -95,7 +81,7 @@
         android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_NewSession"
+        android:layout_above="@+id/btn_Menu"
         android:layout_toRightOf="@+id/btn_WordFix"
         android:layout_toEndOf="@+id/btn_WordFix"
         android:layout_alignParentRight="true"
@@ -108,37 +94,18 @@
         android:onClick="Encourage" />
 
     <Button
-        android:id="@+id/btn_NewSession"
-        android:text="@string/new_session"
-        android:textSize="12sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_Menu"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:clickable="false"
-        android:longClickable="false"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:visibility="invisible"
-        android:onClick="NewSession" />
-
-    <Button
         android:id="@+id/btn_Menu"
         android:text="@string/menu_button"
         android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/btn_Enter"
+        android:layout_alignLeft="@+id/txt_Input"
         android:layout_alignRight="@+id/txt_Input"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:visibility="invisible"
         android:onClick="onMenu" />
 
     <com.oblivionburn.nlp.LiteText

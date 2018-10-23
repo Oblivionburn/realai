@@ -1,2 +1,2 @@
 # realai
-Source code for the Real AI (text) app on Google Play, made in Android Studio.
+Source code for the Real AI app on Google Play, made in Android Studio.
