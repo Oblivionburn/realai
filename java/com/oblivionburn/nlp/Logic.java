@@ -16,6 +16,7 @@ class Logic
     static Boolean TopicBased = true;
     static Boolean ConditionBased = true;
     static Boolean ProceduralBased = true;
+    static Boolean Speech = false;
 
     static String last_response_thinking = "";
 

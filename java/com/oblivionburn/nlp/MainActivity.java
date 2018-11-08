@@ -1,5 +1,6 @@
 package com.oblivionburn.nlp;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -7,17 +8,27 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
+import java.util.Set;
+
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+//import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.speech.tts.TextToSpeech;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,12 +43,23 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnItemSelectedListener
 {
+    private static final String TAG = "REALAI";
+
     private Context context;
+
+    private DataOutputStream os;
+    private BluetoothService blueService;
+    private BluetoothAdapter blueAdapter;
+
+    private TextToSpeech speech;
+    //private static AudioManager audioManager;
 
     private File Brain_dir;
     private File History_dir;
@@ -56,10 +78,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private Button btn_Discourage = null;
     private ImageView img_Face = null;
 
+    private MenuItem mi_Connect = null;
+    private MenuItem mi_Disconnect = null;
+    private MenuItem mi_NewSession = null;
+    private MenuItem mi_Thoughts = null;
+    private MenuItem mi_Tips = null;
+    private MenuItem mi_WordFix = null;
+    private MenuItem mi_SetDelay = null;
+    private MenuItem mi_SetResponse = null;
+    private MenuItem mi_EraseBrain = null;
+    private MenuItem mi_Advanced = null;
+    private MenuItem mi_Exit = null;
+
     private int int_Delay = 0;
     private int delay_selection = 0;
     private int response_selection = 0;
     private int wordfix_selection = 0;
+    private int delay_respond = 0;
 
     private boolean bl_Typing = false;
     private boolean bl_Thought = false;
@@ -69,12 +104,23 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     private boolean bl_Tips = false;
     private boolean bl_Encourage_Pressed = false;
     private boolean bl_Discourage_Pressed = false;
-    private boolean bl_Bored;
-    private boolean bl_Thinking;
+    private boolean bl_Bored = false;
+    private boolean bl_Thinking = false;
+    private boolean bl_Bluetooth = false;
+    private boolean bl_Connected = false;
 
     private static Handler handle_thinking;
     private static Handler handle_timer;
     private static Handler handle_responding;
+
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
+
+    private ListView ConversationView;
+    private String ConnectedDeviceName = null;
+    private StringBuffer OutStringBuffer;
+    private String received;
 
     private View rootView;
 
@@ -116,9 +162,46 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         img_Face = findViewById(R.id.img_Face);
 
-        Brain_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/" );
-        History_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/History/" );
-        Thought_dir = new File(getFilesDir().getAbsolutePath() + "/Brain/Thoughts/" );
+        Brain_dir = new File(getExternalFilesDir(null).getAbsolutePath() + "/Brain/" );
+        History_dir = new File(getExternalFilesDir(null).getAbsolutePath() + "/Brain/History/" );
+        Thought_dir = new File(getExternalFilesDir(null).getAbsolutePath() + "/Brain/Thoughts/" );
+
+        speech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener()
+        {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    speech.setLanguage(Locale.US);
+                }
+            }
+        });
+
+        //audioManager = (AudioManager)this.getSystemService(Context.AUDIO_SERVICE);
+
+        blueAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (blueAdapter != null)
+        {
+            if (blueAdapter.isEnabled())
+            {
+                Log.d(TAG, "Bluetooth enabled");
+
+                try
+                {
+                    OutStringBuffer = new StringBuffer();
+
+                    blueService = new BluetoothService(context, handle_bluetooth);
+                    blueService.start();
+                    connectDevice();
+
+                    bl_Bluetooth = true;
+                    Toast.makeText(context, "Found bluetooth connection.", Toast.LENGTH_SHORT).show();
+                }
+                catch (Exception e)
+                {
+                    Toast.makeText(context, "Failed to establish bluetooth connection.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
 
         createBrain(context);
         createListeners();
@@ -213,6 +296,18 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
                 case "false":
                     Logic.ProceduralBased = false;
+                    break;
+            }
+
+            String speech = Data.getSpeech();
+            switch (speech)
+            {
+                case "true":
+                    Logic.Speech = true;
+                    break;
+
+                case "false":
+                    Logic.Speech = false;
                     break;
             }
         }
@@ -430,9 +525,40 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     public void onDestroy()
     {
         stopTimer();
+
+        handle_responding.removeCallbacks(Respond);
+
         stopThinking();
+
+        if (blueService != null)
+        {
+            blueService.stop();
+        }
+
+        if (speech != null)
+        {
+            speech.stop();
+            speech.shutdown();
+        }
+        //audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false);
+
         android.os.Process.killProcess(android.os.Process.myPid());
+
         super.onDestroy();
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        if (blueService != null)
+        {
+            if (blueService.getState() == BluetoothService.STATE_NONE)
+            {
+                blueService.start();
+            }
+        }
     }
 
     //Back Button
@@ -455,6 +581,147 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         else
         {
             Acknowledge_Exit();
+        }
+    }
+
+    private void SendMessage(String message)
+    {
+        if (blueService.getState() != BluetoothService.STATE_CONNECTED)
+        {
+            return;
+        }
+
+        if (message.length() > 0)
+        {
+            Log.d(TAG, "Bluetooth sent: " + message);
+
+            byte[] send = message.getBytes();
+            blueService.write(send);
+            OutStringBuffer.setLength(0);
+        }
+    }
+
+    private void ReceiveMessage(String message)
+    {
+        if (message.length() > 0)
+        {
+            Log.d(TAG, "Bluetooth received: " + message);
+
+            if (message.equals("RealAI Connect"))
+            {
+                if (!bl_Connected)
+                {
+                    Toast.makeText(context, "AIs connected.", Toast.LENGTH_SHORT).show();
+                    SendMessage("RealAI Connect");
+                    bl_Connected = true;
+
+                    Input.setEnabled(false);
+                    btn_Encourage.setEnabled(false);
+                    btn_Discourage.setEnabled(false);
+                    Input.setText("");
+                }
+            }
+            else if (message.equals("RealAI Disconnect"))
+            {
+                if (bl_Connected)
+                {
+                    Toast.makeText(context, "AIs disconnected.", Toast.LENGTH_SHORT).show();
+                    SendMessage("RealAI Disconnect");
+                    bl_Connected = false;
+
+                    Input.setEnabled(true);
+                    btn_Encourage.setEnabled(true);
+                    btn_Discourage.setEnabled(true);
+
+                    handle_responding.removeCallbacks(Respond);
+                    startTimer();
+                }
+            }
+            else
+            {
+                received = message;
+
+                List<String> history = Data.getHistory();
+                history.add("Other AI: " + received);
+
+                Data.saveHistory(history);
+                Util.ClearLeftovers(context);
+
+                Output.post(ScrollHistory);
+
+                delay_respond = 0;
+                handle_responding.post(Respond);
+                stopTimer();
+            }
+        }
+    }
+
+    private final Handler handle_bluetooth = new Handler()
+    {
+        @Override
+        public void handleMessage(Message msg)
+        {
+            switch (msg.what)
+            {
+                case BluetoothService.Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1)
+                    {
+                        case BluetoothService.STATE_CONNECTED:
+                            Toast.makeText(context, "Bluetooth connection established.", Toast.LENGTH_SHORT).show();
+                            break;
+
+                        case BluetoothService.STATE_CONNECTING:
+                            Toast.makeText(context, "Bluetooth connecting...", Toast.LENGTH_SHORT).show();
+                            break;
+
+                        case BluetoothService.STATE_LISTEN:
+                            Toast.makeText(context, "Bluetooth listening for a connection...", Toast.LENGTH_SHORT).show();
+                            break;
+
+                        case BluetoothService.STATE_NONE:
+                            Toast.makeText(context, "Bluetooth not connected.", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                    break;
+
+                case BluetoothService.Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    String message_received = new String(readBuf, 0, msg.arg1);
+                    ReceiveMessage(message_received);
+                    break;
+
+                case BluetoothService.Constants.MESSAGE_DEVICE_NAME:
+                    ConnectedDeviceName = msg.getData().getString(BluetoothService.Constants.DEVICE_NAME);
+                    if (context != null)
+                    {
+                        Toast.makeText(context, "Connected to " + ConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+
+                case BluetoothService.Constants.MESSAGE_TOAST:
+                    if (context != null)
+                    {
+                        Toast.makeText(context, msg.getData().getString(BluetoothService.Constants.TOAST), Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+        }
+    };
+
+    private void connectDevice()
+    {
+        Set<BluetoothDevice> pairedDevices = blueAdapter.getBondedDevices();
+
+        if (pairedDevices.size() > 0)
+        {
+            for (BluetoothDevice device : pairedDevices)
+            {
+                if (device.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.PHONE_SMART)
+                {
+                    blueService.connect(device, false);
+                    break;
+                }
+            }
         }
     }
 
@@ -485,15 +752,24 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     private void startTimer()
     {
-        int_Delay = 0;
-        handle_timer.post(Timer);
+        if (bl_Connected)
+        {
+            int_Delay = 1;
+
+            Random random = new Random();
+            int_Time = random.nextInt(10000);
+            handle_timer.postDelayed(Timer, int_Time);
+        }
+        else
+        {
+            int_Delay = 0;
+            handle_timer.post(Timer);
+        }
     }
 
     private void stopTimer()
     {
         handle_timer.removeCallbacks(Timer);
-        handle_responding.removeCallbacks(Respond);
-        handle_thinking.removeCallbacks(Thought);
     }
 
     //Thinking
@@ -563,6 +839,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     Util.CleanMemory(context);
 
                     Output.post(ScrollHistory);
+
+                    if (bl_Connected)
+                    {
+                        SendMessage(output);
+                        stopTimer();
+                        bl_DelayForever = true;
+                    }
                 }
             }
         }
@@ -603,12 +886,65 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                         }
                     }
 
+                    if (Logic.Speech)
+                    {
+                        speech.speak(output, TextToSpeech.QUEUE_FLUSH, null);
+                    }
+
                     Data.saveHistory(history);
                     Util.ClearLeftovers(context);
 
                     Output.post(ScrollHistory);
 
                     Input.setText("");
+                }
+            }
+            else if (bl_Connected)
+            {
+                if (delay_respond == 0)
+                {
+                    delay_respond++;
+                    handle_responding.postDelayed(Respond, 2000);
+                }
+                else if (delay_respond == 1)
+                {
+                    Log.d(TAG, "Responding to: " + received);
+
+                    if (received.length() > 0)
+                    {
+                        Log.d(TAG, "Prepping input...");
+                        String[] wordArray = Logic.prepInput(received);
+
+                        if (wordArray != null)
+                        {
+                            Log.d(TAG, "Checking rules...");
+                            List<String> history = Data.getHistory();
+                            received = Util.RulesCheck(received);
+
+                            Log.d(TAG, "Responding...");
+                            String output = Logic.Respond(wordArray, received);
+
+                            if (output != null)
+                            {
+                                if (!output.equals(""))
+                                {
+                                    history.add("AI: " + output);
+                                }
+                            }
+
+                            if (Logic.Speech)
+                            {
+                                speech.speak(output, TextToSpeech.QUEUE_FLUSH, null);
+                            }
+
+                            Data.saveHistory(history);
+                            Util.ClearLeftovers(context);
+
+                            Output.post(ScrollHistory);
+
+                            SendMessage(output);
+                        }
+                    }
                 }
             }
         }
@@ -815,7 +1151,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                     {
                         case DialogInterface.BUTTON_POSITIVE:
                             Util.ToggleAdvanced(item_Advanced);
-                            Enabled_AdvancedStuff();
                             break;
                         case DialogInterface.BUTTON_NEGATIVE:
                             startTimer();
@@ -872,6 +1207,61 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
     //Menu
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu)
+    {
+        mi_Connect = menu.findItem(R.id.connect);
+        mi_Disconnect = menu.findItem(R.id.disconnect);
+        mi_NewSession = menu.findItem(R.id.new_session);
+        mi_Thoughts = menu.findItem(R.id.thought_log);
+        mi_Tips = menu.findItem(R.id.tips);
+        mi_WordFix = menu.findItem(R.id.word_fix);
+        mi_SetDelay = menu.findItem(R.id.setdelay);
+        mi_SetResponse = menu.findItem(R.id.response_types);
+        mi_EraseBrain = menu.findItem(R.id.erase_brain);
+        mi_Advanced = menu.findItem(R.id.advanced);
+        mi_Exit = menu.findItem(R.id.exit_app);
+
+        mi_Connect.setVisible(false);
+        mi_Disconnect.setVisible(false);
+
+        if (bl_Bluetooth)
+        {
+            if (bl_Connected)
+            {
+                mi_Connect.setVisible(false);
+                mi_Disconnect.setVisible(true);
+
+                mi_NewSession.setVisible(false);
+                mi_Thoughts.setVisible(false);
+                mi_Tips.setVisible(false);
+                mi_WordFix.setVisible(false);
+                mi_SetDelay.setVisible(false);
+                mi_SetResponse.setVisible(false);
+                mi_EraseBrain.setVisible(false);
+                mi_Advanced.setVisible(false);
+                mi_Exit.setVisible(false);
+            }
+            else
+            {
+                mi_Connect.setVisible(true);
+                mi_Disconnect.setVisible(false);
+
+                mi_NewSession.setVisible(true);
+                mi_Thoughts.setVisible(true);
+                mi_Tips.setVisible(true);
+                mi_WordFix.setVisible(true);
+                mi_SetDelay.setVisible(true);
+                mi_SetResponse.setVisible(true);
+                mi_EraseBrain.setVisible(true);
+                mi_Advanced.setVisible(true);
+                mi_Exit.setVisible(true);
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
         MenuInflater inflater = getMenuInflater();
@@ -886,6 +1276,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener
         {
             MenuItem advanced = menu.findItem(R.id.advanced);
             advanced.setTitle("Advanced Mode: false");
+        }
+
+        if (Logic.Speech)
+        {
+            MenuItem advanced = menu.findItem(R.id.speech);
+            advanced.setTitle("Speech: true");
+        }
+        else
+        {
+            MenuItem advanced = menu.findItem(R.id.speech);
+            advanced.setTitle("Speech: false");
         }
 
         return true;
@@ -964,6 +1365,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener
     {
         switch (item.getItemId())
         {
+            case R.id.connect:
+                SendMessage("RealAI Connect");
+                return true;
+
+            case R.id.disconnect:
+                SendMessage("RealAI Disconnect");
+                bl_Connected = false;
+
+                Input.setEnabled(true);
+                btn_Encourage.setEnabled(true);
+                btn_Discourage.setEnabled(true);
+
+                handle_responding.removeCallbacks(Respond);
+                startTimer();
+                return true;
+
             case R.id.new_session:
                 NewSession();
                 return true;
@@ -990,8 +1407,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
                 DisplayResponses();
                 return true;
 
-            case R.id.erase_memory:
+            case R.id.erase_brain:
                 Acknowledge_Erase();
+                return true;
+
+            case R.id.speech:
+                Util.ToggleSpeech(item);
                 return true;
 
             case R.id.advanced:
@@ -1179,13 +1600,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             if (delay_selection == 3)
             {
                 Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
+                        Logic.ProceduralBased.toString(), Logic.Speech.toString());
                 bl_DelayForever = true;
             }
             else
             {
                 Data.setConfig(((delay_selection * 10) + 10) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
+                        Logic.ProceduralBased.toString(), Logic.Speech.toString());
                 int_Time = ((delay_selection * 10) + 10) * 1000;
                 bl_DelayForever = false;
             }
@@ -1213,12 +1634,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener
             if (delay_selection == 3)
             {
                 Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
+                        Logic.ProceduralBased.toString(), Logic.Speech.toString());
             }
             else
             {
                 Data.setConfig(((delay_selection * 10) + 10) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
+                        Logic.ProceduralBased.toString(), Logic.Speech.toString());
             }
         }
     }
@@ -1331,7 +1752,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener
 
         tips += "10. In general... keep it simple. The simpler you speak to it, the better it learns. \n\n";
 
-        tips += "For help, check Discord: https://discord.gg/VCQwCk6 \n\n";
+        tips += "For help, check Discord: https://discord.gg/3yJ8rce \n\n";
 
         tips += "For more information and details of how the AI works, check the Forum: http://realai.freeforums.net/#category-3 \n\n";
 

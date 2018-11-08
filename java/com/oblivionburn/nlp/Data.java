@@ -23,7 +23,7 @@ class Data
 
     static void initData(Context context)
     {
-        dir = context.getFilesDir().getAbsolutePath();
+        dir = context.getExternalFilesDir(null).getAbsolutePath();
     }
 
     //Config Data
@@ -35,6 +35,7 @@ class Data
         fileContents.append("Topic Response Method:true").append("\n");
         fileContents.append("Condition Response Method:true").append("\n");
         fileContents.append("Procedural Response Method:true").append("\n");
+        fileContents.append("Speech:false").append("\n");
 
         String fileName = dir + "/Brain/Config.ini";
         File file = new File(fileName);
@@ -56,7 +57,7 @@ class Data
         }
     }
 
-    static void setConfig(String delay, String advanced, String topic, String condition, String procedural)
+    static void setConfig(String delay, String advanced, String topic, String condition, String procedural, String speech)
     {
         StringBuilder fileContents = new StringBuilder();
         fileContents.append("Delay:").append(delay).append("\n");
@@ -64,6 +65,7 @@ class Data
         fileContents.append("Topic Response Method:").append(topic).append("\n");
         fileContents.append("Condition Response Method:").append(condition).append("\n");
         fileContents.append("Procedural Response Method:").append(procedural).append("\n");
+        fileContents.append("Speech:").append(speech).append("\n");
 
         String fileName = dir + "/Brain/Config.ini";
         File file = new File(fileName);
@@ -243,6 +245,41 @@ class Data
                 while ((line = reader.readLine()) != null)
                 {
                     if (line.contains("Procedural Response Method:"))
+                    {
+                        String Config[] = line.split(":");
+                        result = Config[1];
+                        break;
+                    }
+                }
+                dataStream.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
+    }
+
+    static String getSpeech()
+    {
+        String result = "";
+        String fileName = dir + "/Brain/Config.ini";
+        File file = new File(fileName);
+
+        if (file.exists())
+        {
+            try
+            {
+                FileInputStream inputStream = new FileInputStream(file);
+                DataInputStream dataStream = new DataInputStream(inputStream);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dataStream));
+
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    if (line.contains("Speech:"))
                     {
                         String Config[] = line.split(":");
                         result = Config[1];

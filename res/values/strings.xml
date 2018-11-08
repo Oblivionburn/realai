@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Real AI</string>
-    <string name="enter_button">Enter</string>
     <string name="back_button">Back</string>
     <string name="ok_button">OK</string>
     <string name="erase_memory">Erase Brain</string>
@@ -18,4 +17,8 @@
     <string name="advanced_off">Advanced Mode: false</string>
     <string name="new_session">New Session</string>
     <string name="response_types">Set Response Types</string>
+    <string name="connect">Connect AIs</string>
+    <string name="disconnect">Disconnect AIs</string>
+    <string name="speech_on">Speech: true</string>
+    <string name="speech_off">Speech: false</string>
 </resources>

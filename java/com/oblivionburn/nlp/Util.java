@@ -282,33 +282,47 @@ class Util
         {
             Logic.Advanced = false;
             item.setTitle("Advanced Mode: false");
-
-            if (MainActivity.bl_DelayForever)
-            {
-                Data.setConfig("Infinite", "false", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
-            }
-            else
-            {
-                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "false", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
-            }
         }
         else
         {
             Logic.Advanced = true;
             item.setTitle("Advanced Mode: true");
+        }
 
-            if (MainActivity.bl_DelayForever)
-            {
-                Data.setConfig("Infinite", "true", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
-            }
-            else
-            {
-                Data.setConfig((MainActivity.int_Time / 1000) + " seconds", "true", Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
-                        Logic.ProceduralBased.toString());
-            }
+        if (MainActivity.bl_DelayForever)
+        {
+            Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                    Logic.ProceduralBased.toString(), Logic.Speech.toString());
+        }
+        else
+        {
+            Data.setConfig((MainActivity.int_Time / 1000) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                    Logic.ProceduralBased.toString(), Logic.Speech.toString());
+        }
+    }
+
+    static void ToggleSpeech(MenuItem item)
+    {
+        if (Logic.Speech)
+        {
+            Logic.Speech = false;
+            item.setTitle("Speech: false");
+        }
+        else
+        {
+            Logic.Speech = true;
+            item.setTitle("Speech: true");
+        }
+
+        if (MainActivity.bl_DelayForever)
+        {
+            Data.setConfig("Infinite", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                    Logic.ProceduralBased.toString(), Logic.Speech.toString());
+        }
+        else
+        {
+            Data.setConfig((MainActivity.int_Time / 1000) + " seconds", Logic.Advanced.toString(), Logic.TopicBased.toString(), Logic.ConditionBased.toString(),
+                    Logic.ProceduralBased.toString(), Logic.Speech.toString());
         }
     }
 
