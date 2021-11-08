@@ -1,24 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Real AI</string>
-    <string name="back_button">Back</string>
-    <string name="ok_button">OK</string>
-    <string name="erase_memory">Erase Brain</string>
+
+    <string name="app_name">Real AI (text)</string>
+    <string name="action_settings">Settings</string>
+    <string name="enter_button">Enter</string>
+    <string name="erase_memory">Erase Memory</string>
     <string name="exit_app">Exit</string>
     <item name="activityRoot" type="id"/>
-    <string name="thought_log">View Thinking</string>
+    <string name="history_log">History</string>
+    <string name="thought_log">Thoughts</string>
     <string name="menu_button">Menu</string>
-    <string name="word_fix">Correct Spelling</string>
+    <string name="word_fix">Word Fix</string>
     <string name="btn_accept">Accept</string>
-    <string name="setdelay">Set Delay</string>
-    <string name="tips">Tips</string>
-    <string name="encourage">Encourage</string>
-    <string name="discourage">Discourage</string>
-    <string name="advanced_on">Advanced Mode: true</string>
-    <string name="advanced_off">Advanced Mode: false</string>
-    <string name="new_session">New Session</string>
-    <string name="response_types">Set Response Types</string>
-    <string name="connect">Connect AIs</string>
-    <string name="disconnect">Disconnect AIs</string>
-    <string name="speech_on">Speech: true</string>
-    <string name="speech_off">Speech: false</string>
+
 </resources>
